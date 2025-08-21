@@ -59,7 +59,7 @@ function App() {
               </p>
             </div>
             <div className="bbm-trio-photo">
-              <img className="bbm-avatar" src="/images/Lovett.png" alt="Host 1" loading="lazy" decoding="async" />
+              <img className="bbm-avatar" src="./images/Lovett.png" alt="Host 1" loading="lazy" decoding="async" />
               <h3>Mike Lovett</h3>
               <div className="bbm-host-label">Host &amp; Creator</div>
             </div>
@@ -67,7 +67,7 @@ function App() {
           {/* Card 2: Image left, text right */}
           <div className="bbm-trio-card bbm-trio-row bbm-trio-row-reverse">
             <div className="bbm-trio-photo">
-              <img className="bbm-avatar" src="/images/CJ.png" alt="Host 2" loading="lazy" decoding="async" />
+              <img className="bbm-avatar" src="./images/CJ.png" alt="Host 2" loading="lazy" decoding="async" />
               <h3>Chris Johnson</h3>
               <div className="bbm-host-label">Co-Host</div>
             </div>
@@ -88,7 +88,7 @@ function App() {
               </p>
             </div>
             <div className="bbm-trio-photo">
-              <img className="bbm-avatar" src="/images/Ken.png" alt="Host 3" loading="lazy" decoding="async" />
+              <img className="bbm-avatar" src="./images/Ken.png" alt="Host 3" loading="lazy" decoding="async" />
               <h3>Ken Peak</h3>
               <div className="bbm-host-label">Co-Host</div>
             </div>
@@ -124,22 +124,22 @@ function App() {
         <h2>Listen on Your Favorite Platform</h2>
         <div className="bbm-platforms-grid">
           {[
-            { name: 'Apple Podcasts', logo: '/images/apple.jpg', href: 'https://podcasts.apple.com/podcast/id1804483344' },
-            { name: 'Spotify', logo: '/images/spotify.png', href: 'https://open.spotify.com/show/3MyZWfhu2rPPDSbu7wlTjt' },
-            { name: 'Amazon Music', logo: '/images/amazon.png', href: 'https://music.amazon.com/podcasts/f070d1b9-2419-4ec5-82a6-f7bff1611ed3' },
-            { name: 'Podcast Index', logo: '/images/podcast.jpg', href: 'https://podcastindex.org/podcast/7267846' },
-            { name: 'Overcast', logo: '/images/overcast.png', href: 'https://overcast.fm/itunes1804483344' },
-            { name: 'iHeartRadio', logo: '/images/iheart.jpg', href: 'https://www.iheart.com/podcast/269-black-bridge-mindset-270994431/' },
-            { name: 'Podcast Addict', logo: '/images/addict.png', href: 'https://podcastaddict.com/podcast/black-bridge-mindset/5772556' },
-            { name: 'Castro', logo: '/images/castro.jpg', href: 'https://castro.fm/itunes/1804483344' },
-            { name: 'Castbox', logo: '/images/castbox.jpg', href: 'https://castbox.fm/vic/1804483344?ref=buzzsprout' },
-            { name: 'Podchaser', logo: '/images/podchaser.jpg', href: 'https://www.podchaser.com/podcasts/black-bridge-mindset-6041296' },
-            { name: 'Pocket Casts', logo: '/images/pocket.png', href: 'https://pca.st/dijukwcs' },
-            { name: 'Deezer', logo: '/images/deezer.png', href: 'https://www.deezer.com/show/1001749991' },
-            { name: 'Listen Notes', logo: '/images/listen.png', href: 'https://www.listennotes.com/c/43d73d613b13440a8a868032d284f9be/' },
-            { name: 'Player FM', logo: '/images/player.jpg', href: 'https://player.fm/series/series-3655117' },
-            { name: 'Goodpods', logo: '/images/good.png', href: 'https://www.goodpods.com/podcasts-aid/1804483344' },
-            { name: 'TrueFans', logo: '/images/true.jpg', href: 'https://truefans.fm/41a48165-a6cd-58ab-8245-7687e88ababd' },
+            { name: 'Apple Podcasts', logo: './images/apple.jpg', href: 'https://podcasts.apple.com/podcast/id1804483344' },
+            { name: 'Spotify', logo: './images/spotify.png', href: 'https://open.spotify.com/show/3MyZWfhu2rPPDSbu7wlTjt' },
+            { name: 'Amazon Music', logo: './images/amazon.png', href: 'https://music.amazon.com/podcasts/f070d1b9-2419-4ec5-82a6-f7bff1611ed3' },
+            { name: 'Podcast Index', logo: './images/podcast.jpg', href: 'https://podcastindex.org/podcast/7267846' },
+            { name: 'Overcast', logo: './images/overcast.png', href: 'https://overcast.fm/itunes1804483344' },
+            { name: 'iHeartRadio', logo: './images/iheart.jpg', href: 'https://www.iheart.com/podcast/269-black-bridge-mindset-270994431/' },
+            { name: 'Podcast Addict', logo: './images/addict.png', href: 'https://podcastaddict.com/podcast/black-bridge-mindset/5772556' },
+            { name: 'Castro', logo: './images/castro.jpg', href: 'https://castro.fm/itunes/1804483344' },
+            { name: 'Castbox', logo: './images/castbox.jpg', href: 'https://castbox.fm/vic/1804483344?ref=buzzsprout' },
+            { name: 'Podchaser', logo: './images/podchaser.jpg', href: 'https://www.podchaser.com/podcasts/black-bridge-mindset-6041296' },
+            { name: 'Pocket Casts', logo: './images/pocket.png', href: 'https://pca.st/dijukwcs' },
+            { name: 'Deezer', logo: './images/deezer.png', href: 'https://www.deezer.com/show/1001749991' },
+            { name: 'Listen Notes', logo: './images/listen.png', href: 'https://www.listennotes.com/c/43d73d613b13440a8a868032d284f9be/' },
+            { name: 'Player FM', logo: './images/player.jpg', href: 'https://player.fm/series/series-3655117' },
+            { name: 'Goodpods', logo: './images/good.png', href: 'https://www.goodpods.com/podcasts-aid/1804483344' },
+            { name: 'TrueFans', logo: './images/true.jpg', href: 'https://truefans.fm/41a48165-a6cd-58ab-8245-7687e88ababd' },
           ].map((platform) => (
             platform.href ? (
               <a
@@ -171,10 +171,10 @@ function App() {
         <h2>Contact</h2>
         <div className="bbm-social-icons">
           <a href="http://facebook.com/share/12EqRNzg4YP/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="bbm-social-link">
-            <img src="/images/facebook.png" alt="Facebook" className="bbm-social-img" loading="lazy" decoding="async" />
+            <img src="./images/facebook.png" alt="Facebook" className="bbm-social-img" loading="lazy" decoding="async" />
           </a>
           <a href="http://instagram.com/blackbridgemindset" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="bbm-social-link">
-            <img src="/images/instagram.png" alt="Instagram" className="bbm-social-img" loading="lazy" decoding="async" />
+            <img src="./images/instagram.png" alt="Instagram" className="bbm-social-img" loading="lazy" decoding="async" />
           </a>
           <a href="https://www.youtube.com/@BlackBridgeMindset" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="bbm-social-link">
             <img src="./images/youtube.png" alt="YouTube" className="bbm-social-img" />

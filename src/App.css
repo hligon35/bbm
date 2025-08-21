@@ -333,7 +333,7 @@ body, .bbm-root {
 }
 
 .bbm-hero {
-  background: url('./images/bbmlogo.jpg') center/cover no-repeat;
+  background: url('/images/bbmlogo.jpg') center/cover no-repeat;
   min-height: 45vh;
   display: flex;
   align-items: center;
