@@ -59,7 +59,7 @@ function App() {
               </p>
             </div>
             <div className="bbm-trio-photo">
-              <img className="bbm-avatar" src="/images/Lovett.png" alt="Host 1" />
+              <img className="bbm-avatar" src="/images/Lovett.png" alt="Host 1" loading="lazy" decoding="async" />
               <h3>Mike Lovett</h3>
               <div className="bbm-host-label">Host &amp; Creator</div>
             </div>
@@ -67,7 +67,7 @@ function App() {
           {/* Card 2: Image left, text right */}
           <div className="bbm-trio-card bbm-trio-row bbm-trio-row-reverse">
             <div className="bbm-trio-photo">
-              <img className="bbm-avatar" src="/images/CJ.png" alt="Host 2" />
+              <img className="bbm-avatar" src="/images/CJ.png" alt="Host 2" loading="lazy" decoding="async" />
               <h3>Chris Johnson</h3>
               <div className="bbm-host-label">Co-Host</div>
             </div>
@@ -88,7 +88,7 @@ function App() {
               </p>
             </div>
             <div className="bbm-trio-photo">
-              <img className="bbm-avatar" src="/images/Ken.png" alt="Host 3" />
+              <img className="bbm-avatar" src="/images/Ken.png" alt="Host 3" loading="lazy" decoding="async" />
               <h3>Ken Peak</h3>
               <div className="bbm-host-label">Co-Host</div>
             </div>
@@ -151,14 +151,14 @@ function App() {
                 style={{ textDecoration: 'none' }}
               >
                 <div className="bbm-platform-logo">
-                  <img src={platform.logo} alt={platform.name + ' logo'} className="bbm-platform-img" />
+                  <img src={platform.logo} alt={platform.name + ' logo'} className="bbm-platform-img" loading="lazy" decoding="async" />
                 </div>
                 <div className="bbm-platform-name">{platform.name}</div>
               </a>
             ) : (
               <div className="bbm-platform-row" key={platform.name}>
                 <div className="bbm-platform-logo">
-                  <img src={platform.logo} alt={platform.name + ' logo'} className="bbm-platform-img" />
+                  <img src={platform.logo} alt={platform.name + ' logo'} className="bbm-platform-img" loading="lazy" decoding="async" />
                 </div>
                 <div className="bbm-platform-name">{platform.name}</div>
               </div>
@@ -171,10 +171,10 @@ function App() {
         <h2>Contact</h2>
         <div className="bbm-social-icons">
           <a href="http://facebook.com/share/12EqRNzg4YP/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="bbm-social-link">
-            <img src="/images/facebook.png" alt="Facebook" className="bbm-social-img" />
+            <img src="/images/facebook.png" alt="Facebook" className="bbm-social-img" loading="lazy" decoding="async" />
           </a>
           <a href="http://instagram.com/blackbridgemindset" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="bbm-social-link">
-            <img src="/images/instagram.png" alt="Instagram" className="bbm-social-img" />
+            <img src="/images/instagram.png" alt="Instagram" className="bbm-social-img" loading="lazy" decoding="async" />
           </a>
           <a href="https://www.youtube.com/@BlackBridgeMindset" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="bbm-social-link">
             <img src="./images/youtube.png" alt="YouTube" className="bbm-social-img" />
