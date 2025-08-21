@@ -1,9 +1,30 @@
 
+
+
+import React, { useState } from 'react';
 import './App.css';
 
 function App() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const handleMenuToggle = () => setMenuOpen((open) => !open);
+  const handleMenuClose = () => setMenuOpen(false);
   return (
     <div className="bbm-root">
+      <nav className="bbm-navbar">
+        <div className="bbm-navbar-content">
+          <div className="bbm-navbar-logo">Black Bridge Mindset</div>
+          <button className="bbm-navbar-menu" aria-label="Menu" onClick={handleMenuToggle} aria-expanded={menuOpen} aria-controls="bbm-navbar-dropdown">
+            <span className="bbm-navbar-menu-icon"></span>
+          </button>
+          {menuOpen && (
+            <div className="bbm-navbar-dropdown" id="bbm-navbar-dropdown">
+              <a href="#bbm-platforms" onClick={handleMenuClose}>Listen</a>
+              <a href="#" onClick={handleMenuClose}>Episodes</a>
+              <a href="#" onClick={handleMenuClose}>Contact</a>
+            </div>
+          )}
+        </div>
+      </nav>
       <header className="bbm-hero">
         <div className="bbm-overlay">
           <h1 className="bbm-title">The Black Bridge Mindset</h1>
