@@ -1,0 +1,402 @@
+/* Accent color variable for h2 and highlights */
+:root {
+  --bbm-accent: #f7c873;
+}
+/* Scroll Button in About Section */
+.bbm-scroll-btn {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  background: linear-gradient(90deg, #222 0%, #444 100%);
+  color: var(--bbm-accent);
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: 2px solid var(--bbm-accent);
+  border-radius: 30px;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  transition: background 0.2s, color 0.2s, border 0.2s, transform 0.2s;
+  cursor: pointer;
+}
+.bbm-scroll-btn:hover {
+  background: linear-gradient(90deg, #444 0%, #222 100%);
+  color: #232323;
+  border: 2px solid #fffbe6;
+  transform: translateY(-2px) scale(1.04);
+}
+/* Video Titles */
+.bbm-video-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+.bbm-video-title {
+  margin-top: 0.5rem;
+  font-size: 1.08rem;
+  color: var(--bbm-accent);
+  font-weight: 600;
+  text-align: center;
+  max-width: 360px;
+  line-height: 1.3;
+}
+/* Podcast Platforms Grid */
+.bbm-platforms {
+  background: rgba(10,10,10,0.85);
+  border-radius: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 24px 0 rgba(191,193,198,0.08);
+}
+.bbm-platforms-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem 2rem;
+  margin: 2rem auto 1rem auto;
+  max-width: 1100px;
+  width: 100%;
+}
+.bbm-platform-row {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  background: linear-gradient(120deg, #232323 60%, #bfc1c6 100%);
+  border-radius: 1rem;
+  padding: 0.75rem 1.25rem;
+  box-shadow: 0 2px 12px 0 rgba(191,193,198,0.10);
+  min-height: 60px;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.bbm-platform-row:hover {
+  box-shadow: 0 4px 24px 0 #bfc1c6cc;
+  transform: scale(1.03);
+}
+.bbm-platform-logo {
+  flex-shrink: 0;
+}
+.bbm-platform-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 6px #0002;
+}
+.bbm-platform-name {
+  font-size: 1.1rem;
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.bbm-social-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 15px;
+  background: #ffffff00;
+  box-shadow: 0 2px 8px #0003;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.bbm-social-link:hover .bbm-social-img {
+  transform: scale(1.15) rotate(-6deg);
+  box-shadow: 0 4px 16px #bfc1c6cc;
+}
+/* Social Icons */
+.bbm-social-icons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  margin: 1.5rem 0 1rem 0;
+}
+.bbm-social-link svg {
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px #0003;
+}
+.bbm-social-link:hover svg {
+  transform: scale(1.15) rotate(-6deg);
+  box-shadow: 0 4px 16px #bfc1c6cc;
+}
+/* YouTube Videos */
+.bbm-videos-list {
+  margin-top: 2.5rem;
+  margin-bottom: 1.5rem;
+}
+.bbm-videos-embeds {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.bbm-videos-embeds iframe {
+  border-radius: 1rem;
+  box-shadow: 0 2px 16px #0005;
+  background: #000;
+}
+
+@media (max-width: 900px) {
+  .bbm-videos-embeds {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  .bbm-videos-embeds iframe {
+    width: 95vw;
+    height: 220px;
+    max-width: 100%;
+  }
+}
+
+/* Black Bridge Mindset Custom Styles */
+
+.bbm-root {
+  font-family: 'Segoe UI', 'Avenir', Helvetica, Arial, sans-serif;
+  background: linear-gradient(120deg, #0a0a0a 0%, #232323 40%, #bfc1c6 100%);
+  color: #fff;
+  min-height: 100vh;
+  min-width: 100vw;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+}
+
+.bbm-hero {
+  background: url('./images/bbmlogo.jpg') center/cover no-repeat;
+  min-height: 45vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.37);
+}
+.bbm-host-bio {
+  color: #e0e0e0;
+  font-size: 0.98rem;
+  text-align: left;
+  margin-top: 1rem;
+  line-height: 1.5;
+}
+.bbm-overlay {
+  background: rgba(24, 26, 27, 0.85);
+  padding: 3rem 2rem;
+  border-radius: 1.5rem;
+  text-align: center;
+  max-width: 700px;
+  margin: 2rem auto;
+}
+.bbm-title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #f7c873;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 16px #000a;
+}
+.bbm-subtitle {
+  font-size: 1.5rem;
+  color: #fff;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+.bbm-intro {
+  font-size: 1.15rem;
+  color: #e0e0e0;
+  margin-bottom: 0;
+}
+
+.bbm-section {
+  padding: 3rem 2vw 2rem 2vw;
+  width: 100vw;
+  box-sizing: border-box;
+  background: rgba(10,10,10,0.85);
+  border-radius: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 24px 0 rgba(191,193,198,0.08);
+}
+.bbm-section h2 {
+  font-size: 2.2rem;
+  color: #f7c873;
+  margin-bottom: 1.5rem;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+/* Trio Cards */
+.bbm-trio-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  align-items: center;
+  width: 100%;
+}
+.bbm-trio-card {
+  background: linear-gradient(120deg, #232323 60%, #bfc1c6 100%);
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 24px 0 rgba(191,193,198,0.18);
+  padding: 2.5rem 2rem 2rem 2rem;
+  width: 90vw;
+  max-width: 1100px;
+  min-height: 350px;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 2.5rem;
+  margin-bottom: 1.5rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.bbm-trio-row {
+  flex-direction: row;
+}
+.bbm-trio-row-reverse {
+  flex-direction: row-reverse;
+}
+.bbm-trio-text {
+  flex: 2;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+  min-width: 0;
+}
+.bbm-trio-photo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 180px;
+  max-width: 260px;
+}
+.bbm-trio-card:hover {
+  transform: translateY(-8px) scale(1.04);
+  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.28);
+}
+.bbm-avatar {
+  width: 175px;
+  height: 175px;
+  border-radius: 50%;
+  background: #f7c873;
+  color: #232323;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1.1rem;
+  box-shadow: 0 2px 16px #0005;
+  object-fit: cover;
+  object-position: center;
+}
+.bbm-avatar-placeholder {
+  background: linear-gradient(135deg, #f7c873 60%, #fffbe6 100%);
+}
+.bbm-trio-photo h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.25rem;
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+.bbm-host-label {
+  font-size: 1rem;
+  color: #f7c873;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+.bbm-trio-card p {
+  color: #e0e0e0;
+  font-size: 1.08rem;
+  text-align: left;
+  margin-top: 0.5rem;
+  line-height: 1.6;
+  max-width: 95%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Episodes */
+.bbm-episodes-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
+}
+.bbm-episode-card {
+  background: linear-gradient(120deg, #232323 60%, #bfc1c6 100%);
+  border-radius: 1rem;
+  box-shadow: 0 2px 12px 0 rgba(191,193,198,0.14);
+  padding: 1.5rem 1.25rem;
+  width: 320px;
+  color: #fff;
+  text-align: left;
+}
+.bbm-episode-card h4 {
+  color: #f7c873;
+  margin-bottom: 0.5rem;
+}
+.bbm-episode-card p {
+  color: #e0e0e0;
+}
+
+/* About & Contact */
+.bbm-about p, .bbm-contact p {
+  color: #e0e0e0;
+  font-size: 1.1rem;
+  max-width: 700px;
+  margin: 0 auto;
+}
+.bbm-contact a {
+  color: #f7c873;
+  text-decoration: underline;
+  font-weight: 600;
+}
+.bbm-contact a:hover {
+  color: #fffbe6;
+}
+
+/* Footer */
+.bbm-footer {
+  background: linear-gradient(90deg, #0a0a0a 0%, #bfc1c6 100%);
+  color: #bdbdbd;
+  text-align: center;
+  padding: 1.5rem 0 1rem 0;
+  margin-top: auto;
+  font-size: 1rem;
+  letter-spacing: 1px;
+}
+
+@media (max-width: 900px) {
+  .bbm-trio-cards, .bbm-episodes-list {
+    flex-direction: column;
+    align-items: center;
+  }
+  .bbm-section {
+    padding: 2rem 2vw 1.5rem 2vw;
+    width: 100vw;
+  }
+  .bbm-trio-card {
+    flex-direction: column !important;
+    width: 98vw;
+    min-height: unset;
+    padding: 2rem 1rem 1.5rem 1rem;
+    gap: 1.5rem;
+    align-items: center;
+  }
+  .bbm-trio-photo {
+    max-width: 100vw;
+    min-width: unset;
+  }
+  .bbm-avatar {
+    width: 120px;
+    height: 120px;
+  }
+  .bbm-trio-text {
+    text-align: left;
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
