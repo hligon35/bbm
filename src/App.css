@@ -23,14 +23,14 @@
     padding: 1.2rem 0.5rem;
     border-radius: 0.7rem;
     margin: 1rem auto;
-    max-width: 98vw;
+    max-width: 100%;
   }
   .bbm-trio-card {
     padding: 1.2rem 0.5rem 1rem 0.5rem;
     gap: 1rem;
     border-radius: 0.7rem;
     min-height: unset;
-    width: 99vw;
+    width: 100%;
   }
   .bbm-avatar {
     width: 80px;
@@ -56,14 +56,14 @@
     font-size: 0.92rem;
   }
   .bbm-video-item iframe {
-    width: 95vw !important;
+    width: 100% !important;
     height: 160px !important;
     min-width: unset;
-    max-width: 100vw;
+    max-width: 100%;
   }
   .bbm-video-title {
     font-size: 0.98rem;
-    max-width: 95vw;
+    max-width: 100%;
   }
   .bbm-social-img {
     width: 28px;
@@ -109,17 +109,18 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
+  width: 100%;
   z-index: 1000;
   background: rgba(20, 20, 20, 0.55);
   box-shadow: 0 2px 12px 0 rgba(0,0,0,0.10);
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   height: 60px;
   display: flex;
   align-items: center;
 }
 .bbm-navbar-content {
-  width: 100vw;
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   display: flex;
@@ -170,6 +171,7 @@
 }
 body, .bbm-root {
   padding-top: 60px;
+  overflow-x: hidden;
 }
 /* Accent color variable for h2 and highlights */
 :root {
@@ -258,6 +260,7 @@ body, .bbm-root {
   color: #fff;
   font-weight: 600;
   letter-spacing: 0.5px;
+  overflow-wrap: anywhere;
 }
 .bbm-social-img {
   width: 40px;
@@ -313,10 +316,21 @@ body, .bbm-root {
     gap: 1.5rem;
   }
   .bbm-videos-embeds iframe {
-    width: 95vw;
+    width: 100%;
     height: 220px;
     max-width: 100%;
   }
+}
+
+/* Global sizing and overflow fixes */
+html {
+  box-sizing: border-box;
+}
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+html, body, .bbm-root {
+  overflow-x: hidden;
 }
 
 /* Black Bridge Mindset Custom Styles */
@@ -326,8 +340,8 @@ body, .bbm-root {
   background: linear-gradient(120deg, #0a0a0a 0%, #232323 40%, #bfc1c6 100%);
   color: #fff;
   min-height: 100vh;
-  min-width: 100vw;
-  width: 100vw;
+  min-width: 100%;
+  width: 100%;
   display: flex;
   flex-direction: column;
 }
@@ -379,7 +393,7 @@ body, .bbm-root {
 
 .bbm-section {
   padding: 3rem 2vw 2rem 2vw;
-  width: 100vw;
+  width: 100%;
   box-sizing: border-box;
   background: rgba(10,10,10,0.85);
   border-radius: 1.5rem;
@@ -407,7 +421,7 @@ body, .bbm-root {
   border-radius: 1.25rem;
   box-shadow: 0 4px 24px 0 rgba(191,193,198,0.18);
   padding: 2.5rem 2rem 2rem 2rem;
-  width: 90vw;
+  width: 100%;
   max-width: 1100px;
   min-height: 350px;
   display: flex;
@@ -543,33 +557,66 @@ body, .bbm-root {
 }
 
 @media (max-width: 900px) {
-  .bbm-trio-cards, .bbm-episodes-list {
+  .bbm-videos-embeds {
     flex-direction: column;
     align-items: center;
+    gap: 1.5rem;
   }
+  .bbm-videos-embeds iframe {
+    width: 100%;
+    height: 220px;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .bbm-video-item iframe {
+    width: 100% !important;
+    height: 160px !important;
+    min-width: unset;
+    max-width: 100%;
+  }
+  .bbm-video-title {
+    font-size: 0.98rem;
+    max-width: 100%;
+  }
+  .bbm-trio-card {
+    padding: 1.2rem 0.5rem 1rem 0.5rem;
+    gap: 1rem;
+    border-radius: 0.7rem;
+    min-height: unset;
+    width: 100%;
+  }
+  .bbm-overlay {
+    padding: 1.2rem 0.5rem;
+    border-radius: 0.7rem;
+    margin: 1rem auto;
+    max-width: 100%;
+  }
+}
+
+/* One-column platforms on very small screens */
+@media (max-width: 380px) {
+  .bbm-platforms-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
   .bbm-section {
     padding: 2rem 2vw 1.5rem 2vw;
-    width: 100vw;
+    width: 100%;
   }
   .bbm-trio-card {
     flex-direction: column !important;
-    width: 98vw;
+    width: 100%;
     min-height: unset;
     padding: 2rem 1rem 1.5rem 1rem;
     gap: 1.5rem;
     align-items: center;
   }
   .bbm-trio-photo {
-    max-width: 100vw;
+    max-width: 100%;
     min-width: unset;
-  }
-  .bbm-avatar {
-    width: 120px;
-    height: 120px;
-  }
-  .bbm-trio-text {
-    text-align: left;
-    width: 100%;
-    justify-content: flex-start;
   }
 }
