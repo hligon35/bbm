@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import './App.css';
 
-// Build correct public asset URLs respecting Vite base
-const asset = (path) => new URL(path, import.meta.env.BASE_URL).href;
+// Build correct public asset URLs respecting Vite base (no URL constructor)
+const asset = (path) => {
+  const base = (import.meta.env.BASE_URL || '/');
+  const clean = String(path).replace(/^\/+/, '');
+  return `${base}${clean}`;
+};
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -106,7 +110,7 @@ function App() {
             </div>
             <div className="bbm-video-item">
               <iframe width="360" height="215" src="https://www.youtube.com/embed/-8CNeRJDA_A" title="No Shortcuts_ Consistency is Key." frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
-              <div className="bbm-video-title">No Shortcuts_ Consistency is Key.</div>
+              <div className="bbm-video-title">No Shortcuts Consistency is Key.</div>
             </div>
             <div className="bbm-video-item">
               <iframe width="360" height="215" src="https://www.youtube.com/embed/YVsLsv54wgU" title="Inspiring Entrepreneurial Journey of Attorney Keith Lamar Jr." frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
@@ -180,7 +184,7 @@ function App() {
             <img src={asset('images/youtube.png')} alt="YouTube" className="bbm-social-img" />
           </a>
           <a href="https://blackbridgemindset.buzzsprout.com/" target="_blank" rel="noopener noreferrer" aria-label="Buzzsprout" className="bbm-social-link">
-            <img src={asset('images/buzzsprout.png')} alt="Buzzsprout" className="bbm-social-img" />
+            <img src={asset('images/buzzsprout.jpg')} alt="Buzzsprout" className="bbm-social-img" />
           </a>
         </div>
         <p>Want to connect, collaborate, or share your story? <a href="mailto:info@blackbridgemindset.com">Email us</a> or follow us on social media.</p>

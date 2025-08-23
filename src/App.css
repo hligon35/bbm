@@ -556,6 +556,17 @@ html, body, .bbm-root {
   letter-spacing: 1px;
 }
 
+/* Layout reset to ensure full-width on desktop (override Vite template) */
+body {
+  display: block;
+  place-items: initial;
+  justify-content: initial;
+  align-items: initial;
+}
+#root {
+  width: 100%;
+}
+
 @media (max-width: 900px) {
   .bbm-videos-embeds {
     flex-direction: column;
