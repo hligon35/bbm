@@ -47,7 +47,7 @@
     height: 28px;
   }
   .bbm-platform-row {
-    padding: 0.5rem 0.5rem;
+  padding: 0.5rem 0.5rem;
     border-radius: 0.5rem;
     min-height: 40px;
     gap: 0.7rem;
@@ -246,14 +246,20 @@ body, .bbm-root {
 }
 .bbm-platform-logo {
   flex-shrink: 0;
+  width: 48px;            /* ensure consistent logo box width */
+  height: 48px;           /* ensure consistent logo box height */
+  display: flex;          /* center logo inside the box */
+  align-items: center;
+  justify-content: center;
 }
 .bbm-platform-img {
-  width: 40px;
+  width: 40px;            /* uniform logo visual size */
   height: 40px;
   object-fit: contain;
   background: #fff;
   border-radius: 0.5rem;
   box-shadow: 0 1px 6px #0002;
+  display: block;         /* remove inline gaps */
 }
 .bbm-platform-name {
   font-size: 1.1rem;
@@ -507,28 +513,22 @@ html, body, .bbm-root {
 
 /* Episodes */
 .bbm-episodes-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  justify-items: center; /* horizontally align cards */
 }
 .bbm-episode-card {
   background: linear-gradient(120deg, #232323 60%, #bfc1c6 100%);
   border-radius: 1rem;
   box-shadow: 0 2px 12px 0 rgba(191,193,198,0.14);
   padding: 1.5rem 1.25rem;
-  width: 320px;
+  width: 100%;
+  max-width: 300px; /* uniform, fits content */
   color: #fff;
   text-align: left;
+  margin: 0 auto; /* center within grid cell */
 }
-.bbm-episode-card h4 {
-  color: #f7c873;
-  margin-bottom: 0.5rem;
-}
-.bbm-episode-card p {
-  color: #e0e0e0;
-}
-
 /* About & Contact */
 .bbm-about p, .bbm-contact p {
   color: #e0e0e0;
@@ -580,54 +580,177 @@ body {
   }
 }
 
-@media (max-width: 600px) {
-  .bbm-video-item iframe {
-    width: 100% !important;
-    height: 160px !important;
-    min-width: unset;
-    max-width: 100%;
-  }
-  .bbm-video-title {
-    font-size: 0.98rem;
-    max-width: 100%;
-  }
-  .bbm-trio-card {
-    padding: 1.2rem 0.5rem 1rem 0.5rem;
-    gap: 1rem;
-    border-radius: 0.7rem;
-    min-height: unset;
-    width: 100%;
-  }
-  .bbm-overlay {
-    padding: 1.2rem 0.5rem;
-    border-radius: 0.7rem;
-    margin: 1rem auto;
-    max-width: 100%;
-  }
-}
-
-/* One-column platforms on very small screens */
-@media (max-width: 380px) {
-  .bbm-platforms-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
+/* Episodes: responsive sizing and alignment */
 @media (max-width: 900px) {
-  .bbm-section {
-    padding: 2rem 2vw 1.5rem 2vw;
-    width: 100%;
+  .bbm-episodes-list {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    justify-items: center;
+    gap: 1.25rem;
   }
-  .bbm-trio-card {
-    flex-direction: column !important;
+  .bbm-episode-card {
+    max-width: 300px;
+  }
+}
+@media (max-width: 600px) {
+  .bbm-episode-card {
+    max-width: 280px;
+  }
+}
+
+/* Ensure host images appear above text on small screens */
+@media (max-width: 900px) {
+  .bbm-trio-card { flex-direction: column !important; }
+  .bbm-trio-photo { order: -1; }
+  .bbm-trio-text { order: 1; }
+}
+
+/* Stack platform logo above name on small screens and center content */
+@media (max-width: 600px) {
+  .bbm-platform-row {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  .bbm-platform-name { text-align: center; }
+}
+
+/* Center contact paragraph text */
+.bbm-contact p { text-align: center; }
+
+/* Center host content and all text on smaller screens */
+@media (max-width: 900px) {
+  /* Hosts (Trio) */
+  .bbm-trio-text {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .bbm-trio-card p {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+@media (max-width: 600px) {
+  /* Center general text blocks */
+  .bbm-about p,
+  .bbm-contact p,
+  .bbm-episode-card,
+  .bbm-episode-card h4,
+  .bbm-episode-card p,
+  .bbm-platform-row,
+  .bbm-video-title {
+    text-align: center;
+  }
+}
+
+/* Center host image on smaller screens */
+@media (max-width: 900px) {
+  .bbm-trio-photo {
     width: 100%;
-    min-height: unset;
-    padding: 2rem 1rem 1.5rem 1rem;
-    gap: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .bbm-avatar {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Podcast platforms: keep logo left of text and ensure cards fit within view on small screens */
+@media (max-width: 600px) {
+  .bbm-platforms-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.75rem 0.75rem;
+  }
+  .bbm-platform-row {
+    flex-direction: row;
+  justify-content: flex-start;
+    align-items: center;
+    text-align: left;
+    width: 100%;
+    min-height: unset; /* fit to content */
+  }
+  .bbm-platform-name {
+    text-align: left;
+    flex: 1 1 auto;
+  }
+}
+
+/* Consistent horizontal alignment for host images across views */
+.bbm-trio-photo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.bbm-avatar {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+@media (min-width: 901px) {
+  /* Fix the photo column width so avatars align consistently across cards */
+  .bbm-trio-photo {
+    width: 260px;
+    min-width: 260px;
+    max-width: 260px;
+  }
+  .bbm-trio-text {
+    flex: 1 1 auto;
+  }
+}
+
+/* Final mobile centering overrides for host images */
+@media (max-width: 900px) {
+  .bbm-trio-card { align-items: center; }
+  .bbm-trio-photo {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 100%;
+  }
+  .bbm-trio-photo > * {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Final override: horizontally align platform image and text on small screens */
+@media (max-width: 600px) {
+  .bbm-platforms .bbm-platform-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: left;
+    gap: 0.75rem;
+  }
+  .bbm-platforms .bbm-platform-logo,
+  .bbm-platforms .bbm-platform-name {
+    display: flex;
     align-items: center;
   }
-  .bbm-trio-photo {
-    max-width: 100%;
-    min-width: unset;
+  .bbm-platforms .bbm-platform-img {
+    display: block;
+  }
+}
+
+/* Ensure consistent left alignment and padding for platform cards on small screens */
+@media (max-width: 600px) {
+  /* Keep content left-aligned, matching Apple Podcasts card spacing */
+  .bbm-platforms .bbm-platform-row {
+    justify-content: flex-start;
+  }
+  .bbm-platforms .bbm-platform-name {
+    flex: 1 1 auto;
+  }
+  /* Normalize left padding so all logos share the same left margin */
+  .bbm-platform-row {
+    padding-left: 1.25rem; /* match desktop left padding for visual consistency */
   }
 }
