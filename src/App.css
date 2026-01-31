@@ -1,3 +1,69 @@
+@media (min-width: 901px) {
+  .bbm-navbar-menu {
+    display: none !important;
+  }
+}
+/* Navbar links inline on desktop, hamburger on mobile */
+.bbm-navbar-links {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+.bbm-navbar-links a {
+  color: var(--bbm-accent, #f7c873);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 1.1rem;
+  transition: color 0.2s;
+}
+.bbm-navbar-links a:hover {
+  color: #fffbe6;
+}
+
+@media (max-width: 900px) {
+  .bbm-navbar-links {
+    display: none;
+  }
+  .bbm-navbar-menu {
+    display: block;
+  }
+}
+
+@media (min-width: 901px) {
+  .bbm-navbar-menu {
+    display: none;
+  }
+  .bbm-navbar-dropdown {
+    display: none !important;
+  }
+}
+
+/* Dropdown directly under hamburger */
+.bbm-navbar-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 1.5rem;
+  background: #232323;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 16px #000a;
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  z-index: 1000;
+  min-width: 180px;
+  margin-top: 0.5rem;
+}
+.bbm-navbar-dropdown a {
+  color: var(--bbm-accent, #f7c873);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 1.1rem;
+  padding: 0.2rem 0;
+}
+.bbm-navbar-dropdown a:hover {
+  color: #fffbe6;
+}
 @media (max-width: 600px) {
   .bbm-navbar-content {
     padding: 0 0.5rem;
@@ -10,8 +76,12 @@
     width: 22px;
   }
   .bbm-section {
-    padding: 1.2rem 0.5vw 1rem 0.5vw;
+    padding: 2rem 1rem 2rem 1rem;
+    margin: 2rem auto 2rem auto;
     border-radius: 0.7rem;
+    max-width: 900px;
+    width: 100%;
+    box-sizing: border-box;
   }
   .bbm-title {
     font-size: 2.1rem;
@@ -128,12 +198,27 @@
   justify-content: space-between;
   padding: 0 2rem;
 }
-.bbm-navbar-logo {
+.bbm-navbar-logo-group {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.bbm-navbar-logo-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #f7c873;
+  background: #fff;
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.10);
+}
+.bbm-navbar-logo-text {
   font-size: 1.5rem;
   font-weight: 800;
   color: var(--bbm-accent, #f7c873);
   letter-spacing: 2px;
   text-shadow: 0 2px 8px #000a;
+  text-decoration: none;
 }
 .bbm-navbar-menu {
   background: none;
@@ -398,13 +483,14 @@ html, body, .bbm-root {
 }
 
 .bbm-section {
-  padding: 3rem 2vw 2rem 2vw;
+  padding: 2rem 1rem 2rem 1rem;
+  margin: 2rem auto 2rem auto;
+  border-radius: 1.2rem;
+  background: rgba(10,10,10,0.85);
+  box-shadow: 0 2px 24px 0 rgba(191,193,198,0.08);
+  max-width: 900px;
   width: 100%;
   box-sizing: border-box;
-  background: rgba(10,10,10,0.85);
-  border-radius: 1.5rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 24px 0 rgba(191,193,198,0.08);
 }
 .bbm-section h2 {
   font-size: 2.2rem;
@@ -549,11 +635,68 @@ html, body, .bbm-root {
 .bbm-footer {
   background: linear-gradient(90deg, #0a0a0a 0%, #bfc1c6 100%);
   color: #bdbdbd;
-  text-align: center;
-  padding: 1.5rem 0 1rem 0;
+  padding: 2rem 0 1rem 0;
   margin-top: auto;
   font-size: 1rem;
   letter-spacing: 1px;
+}
+.bbm-footer-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 1100px;
+  margin: 0 auto;
+  gap: 2.5rem;
+  flex-wrap: wrap;
+}
+.bbm-footer-title-text.bbm-footer-title-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-weight: 800;
+  color: var(--bbm-accent, #f7c873);
+  letter-spacing: 2px;
+  font-size: 1.6rem;
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+}
+.bbm-footer-title-text.bbm-footer-title-stack span {
+  color: var(--bbm-accent, #f7c873);
+  font-size: 1.3em;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.bbm-footer-contact {
+  flex: 1 1 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.bbm-footer-socials {
+  display: flex;
+  gap: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+.bbm-footer-links {
+  font-size: 1.05rem;
+  color: #f7c873;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+.bbm-footer-links a {
+  color: #fffbe6;
+  text-decoration: underline;
+  font-weight: 600;
+}
+.bbm-footer-links a:hover {
+  color: #f7c873;
+}
+.bbm-footer-copyright {
+  font-size: 0.95rem;
+  color: #bdbdbd;
+  margin-top: 0.5rem;
 }
 
 /* Layout reset to ensure full-width on desktop (override Vite template) */
