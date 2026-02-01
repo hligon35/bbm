@@ -4,12 +4,23 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      deploy_ref:
+        description: 'Branch/tag/SHA to deploy (e.g. v1)'
+        required: true
+        default: 'main'
+
+permissions:
+  contents: write
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.deploy_ref || github.ref }}
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -21,3 +32,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
           publish_branch: gh-pages
+          cname: blackbridgemindset.com
