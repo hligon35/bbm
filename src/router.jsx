@@ -8,7 +8,7 @@ import Contact from './Contact';
 
 export default function Router() {
   return (
-    <BrowserRouter basename="/bbm/">
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/episodes" element={<Episodes />} />

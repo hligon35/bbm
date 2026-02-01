@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/bbm/',
+  // Custom domain deploy (e.g., https://blackbridgemindset.com) should use root paths.
+  base: '/',
   plugins: [react()],
 })
