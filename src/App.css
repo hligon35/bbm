@@ -635,12 +635,14 @@ html, body, .bbm-root {
 }
 .bbm-footer-content {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   max-width: 1100px;
-  margin: 0 0 0 490px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
   gap: 2.5rem;
   flex-wrap: wrap;
+  width: 100%;
 }
 .bbm-footer-title-text.bbm-footer-title-stack {
   display: flex;
@@ -677,11 +679,12 @@ html, body, .bbm-root {
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
-  .bbm-avatar {
-    width: 140px;
-    height: 140px;
-    margin-bottom: 0.5rem;
-  }
+}
+
+.bbm-footer-links .bbm-avatar {
+  width: 140px;
+  height: 140px;
+  margin-bottom: 0.5rem;
 }
 .bbm-footer-links a:hover {
   color: #f7c873;
@@ -690,6 +693,25 @@ html, body, .bbm-root {
   font-size: 0.95rem;
   color: #bdbdbd;
   margin-top: 0.5rem;
+}
+
+@media (max-width: 900px) {
+  .bbm-footer-content {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.25rem;
+  }
+  .bbm-footer-title-text.bbm-footer-title-stack {
+    align-items: center;
+  }
+  .bbm-footer-socials {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .bbm-footer-contact {
+    align-items: center;
+  }
 }
 
 /* Layout reset to ensure full-width on desktop (override Vite template) */
