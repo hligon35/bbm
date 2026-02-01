@@ -79,9 +79,9 @@
     padding: 2rem 1rem 2rem 1rem;
     margin: 2rem auto 2rem auto;
     border-radius: 0.7rem;
-    max-width: 900px;
     width: 100%;
     box-sizing: border-box;
+    /* max-width: 900px; removed to allow expansion */
   }
   .bbm-title {
     font-size: 2.1rem;
@@ -317,10 +317,10 @@ body, .bbm-root {
 .bbm-platform-row {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
+  gap: 0.5rem;
   background: linear-gradient(120deg, #232323 60%, #bfc1c6 100%);
   border-radius: 1rem;
-  padding: 0.75rem 1.25rem;
+  padding: 0.75rem 1rem;
   box-shadow: 0 2px 12px 0 rgba(191,193,198,0.10);
   min-height: 60px;
   transition: box-shadow 0.2s, transform 0.2s;
@@ -490,6 +490,7 @@ html, body, .bbm-root {
   box-shadow: 0 2px 24px 0 rgba(191,193,198,0.08);
   max-width: 900px;
   width: 100%;
+    /* max-width: 900px; removed to allow expansion */
   box-sizing: border-box;
 }
 .bbm-section h2 {
@@ -501,12 +502,15 @@ html, body, .bbm-root {
 }
 
 /* Trio Cards */
+/* Trio page container: max-width 1200px */
 .bbm-trio-cards {
   display: flex;
   flex-direction: column;
   gap: 2.5rem;
   align-items: center;
   width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 .bbm-trio-card {
   background: linear-gradient(120deg, #232323 60%, #bfc1c6 100%);
@@ -514,7 +518,7 @@ html, body, .bbm-root {
   box-shadow: 0 4px 24px 0 rgba(191,193,198,0.18);
   padding: 2.5rem 2rem 2rem 2rem;
   width: 100%;
-  max-width: 1100px;
+  max-width: 1200px;
   min-height: 350px;
   display: flex;
   flex-direction: row;
@@ -553,7 +557,8 @@ html, body, .bbm-root {
 }
 .bbm-avatar {
   width: 175px;
-  height: 175px;
+  height: 240px;
+  width: 240px;
   border-radius: 50%;
   background: #f7c873;
   color: #232323;
@@ -566,9 +571,6 @@ html, body, .bbm-root {
   box-shadow: 0 2px 16px #0005;
   object-fit: cover;
   object-position: center;
-}
-.bbm-avatar-placeholder {
-  background: linear-gradient(135deg, #f7c873 60%, #fffbe6 100%);
 }
 .bbm-trio-photo h3 {
   margin: 0 0 0.25rem 0;
@@ -586,16 +588,7 @@ html, body, .bbm-root {
   text-align: center;
   letter-spacing: 0.5px;
 }
-.bbm-trio-card p {
-  color: #e0e0e0;
-  font-size: 1.08rem;
-  text-align: left;
-  margin-top: 0.5rem;
-  line-height: 1.6;
-  max-width: 95%;
-  margin-left: auto;
-  margin-right: auto;
-}
+  /* .bbm-trio-card mobile override removed to allow desktop max-width to apply */
 
 /* Episodes */
 .bbm-episodes-list {
@@ -645,7 +638,7 @@ html, body, .bbm-root {
   align-items: center;
   justify-content: center;
   max-width: 1100px;
-  margin: 0 auto;
+  margin: 0 0 0 490px;
   gap: 2.5rem;
   flex-wrap: wrap;
 }
@@ -684,11 +677,11 @@ html, body, .bbm-root {
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
-}
-.bbm-footer-links a {
-  color: #fffbe6;
-  text-decoration: underline;
-  font-weight: 600;
+  .bbm-avatar {
+    width: 140px;
+    height: 140px;
+    margin-bottom: 0.5rem;
+  }
 }
 .bbm-footer-links a:hover {
   color: #f7c873;
