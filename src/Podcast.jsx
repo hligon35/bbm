@@ -1,5 +1,6 @@
 import React from 'react';
 import Layout from './Layout';
+import BuzzsproutPlayer from './BuzzsproutPlayer';
 
 const asset = (path) => {
   const base = (import.meta.env.BASE_URL || '/');
@@ -14,6 +15,9 @@ export default function Podcast() {
         <h2>About the Podcast</h2>
         <p>Welcome to The Black Bridge Mindset podcast, where culture, entrepreneurship, and business intersect to fuel inspiration. This podcast celebrates the power of diverse voices shaping the future of business.</p>
         <p>Each episode we’ll delve deep into the challenges, triumphs, and transformative ideas that redefine success. Because when culture and ambition come together, the results are game-changing.</p>
+
+        <h3 style={{ marginTop: '1.5rem', textAlign: 'center' }}>Check out the Podcast Episodes</h3>
+        <BuzzsproutPlayer />
       </main>
       <section className="bbm-section bbm-platforms" id="bbm-platforms">
         <h2>Listen on Your Favorite Platform</h2>

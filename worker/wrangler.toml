@@ -1,0 +1,21 @@
+name = "bbm-contact"
+main = "src/index.js"
+compatibility_date = "2026-02-01"
+
+# Route this Worker under your site (adjust domain as needed):
+# routes = [
+#   { pattern = "blackbridgemindset.com/api/contact*", zone_name = "blackbridgemindset.com" }
+# ]
+
+[vars]
+# Where contact emails get delivered
+EMAIL_TO = "ceejae06@gmail.com"
+
+# IMPORTANT: Use a FROM address on a domain you control (recommended)
+# Example: "noreply@blackbridgemindset.com"
+EMAIL_FROM = "noreply@blackbridgemindset.com"
+FROM_NAME = "Black Bridge Mindset"
+
+# Comma-separated allowlist of origins for CORS. Example:
+# ALLOWED_ORIGINS = "https://blackbridgemindset.com,https://www.blackbridgemindset.com"
+ALLOWED_ORIGINS = "*"

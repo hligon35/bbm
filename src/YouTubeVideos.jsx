@@ -123,9 +123,6 @@ export default function YouTubeVideos() {
           >
             See all videos on YouTube
           </a>
-          <div style={{ opacity: 0.9, marginTop: '0.5rem', fontSize: '0.95rem' }}>
-            To show every video as a list on this page, set <b>VITE_YOUTUBE_API_KEY</b>.
-          </div>
         </div>
       </div>
     );
