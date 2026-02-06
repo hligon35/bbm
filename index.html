@@ -29,6 +29,19 @@
   <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;700&display=swap" rel="stylesheet" />
   </head>
   <body>
+    <script>
+      // If we were routed through /404.html (static host deep link), restore the original URL.
+      (function () {
+        try {
+          var redirect = sessionStorage.getItem('bbm_redirect');
+          if (!redirect) return;
+          sessionStorage.removeItem('bbm_redirect');
+          history.replaceState(null, '', redirect);
+        } catch (e) {
+          // ignore
+        }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
