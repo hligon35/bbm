@@ -1,4 +1,5 @@
 import { handleScheduleRequest } from './api/schedule';
+import { sendEmail } from './email';
 
 function jsonResponse(body, { status = 200, headers = {} } = {}) {
   return new Response(JSON.stringify(body), {
@@ -88,37 +89,15 @@ function buildEmail({ name, email, subject, message, ip, ua, origin }) {
 }
 
 async function sendViaMailChannels(env, { replyToEmail, subject, text, html }) {
-  // MailChannels uses a SendGrid-compatible payload.
-  const payload = {
-    personalizations: [
-      {
-        to: [{ email: env.EMAIL_TO }],
-      },
-    ],
-    from: {
-      email: env.EMAIL_FROM,
-      name: env.FROM_NAME || 'Website',
-    },
-    reply_to: {
-      email: replyToEmail,
-    },
+  await sendEmail(env, {
+    to: env.EMAIL_TO,
+    fromEmail: env.EMAIL_FROM,
+    fromName: env.FROM_NAME || 'Website',
+    replyTo: replyToEmail,
     subject,
-    content: [
-      { type: 'text/plain', value: text },
-      { type: 'text/html', value: html },
-    ],
-  };
-
-  const res = await fetch('https://api.mailchannels.net/tx/v1/send', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    text,
+    html,
   });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw new Error(`Mail send failed (${res.status}). ${body}`);
-  }
 }
 
 export default {

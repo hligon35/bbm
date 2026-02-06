@@ -20,6 +20,16 @@ EMAIL_TO = "ceejae06@gmail.com"
 EMAIL_FROM = "noreply@blackbridgemindset.com"
 FROM_NAME = "Black Bridge Mindset"
 
+# Email delivery
+# --------------
+# This worker will use SendGrid if `SENDGRID_API_KEY` is configured,
+# otherwise it falls back to MailChannels.
+#
+# Production: set as a secret
+#   wrangler secret put SENDGRID_API_KEY --cwd worker
+#
+# (Optional) If you want to force SendGrid only, set the secret and do not rely on fallback.
+
 # Comma-separated allowlist of origins for CORS. Example:
 # ALLOWED_ORIGINS = "https://blackbridgemindset.com,https://www.blackbridgemindset.com"
 ALLOWED_ORIGINS = "https://blackbridgemindset.com,https://www.blackbridgemindset.com"

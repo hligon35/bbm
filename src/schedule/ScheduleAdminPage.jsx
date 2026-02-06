@@ -12,6 +12,9 @@ import {
   getScheduleApiBase,
 } from './utils/adminApi';
 
+import AdminCarouselNav from './components/AdminCarouselNav';
+import MailBlastPanel from './components/MailBlastPanel';
+
 function defaultAvailability() {
   return {
     timezone: 'America/Chicago',
@@ -36,6 +39,8 @@ export default function ScheduleAdminPage() {
   const navigate = useNavigate();
   const [sessionState, setSessionState] = useState({ status: 'loading', email: null });
 
+  const [activePanel, setActivePanel] = useState('scheduler');
+
   const [availabilityState, setAvailabilityState] = useState({ status: 'idle', data: null, error: null });
   const [availabilityDraft, setAvailabilityDraft] = useState(defaultAvailability());
 
@@ -44,6 +49,14 @@ export default function ScheduleAdminPage() {
   const [inviteState, setInviteState] = useState({ status: 'idle', data: null, error: null });
 
   const apiBase = useMemo(() => getScheduleApiBase(), []);
+
+  const adminPanels = useMemo(
+    () => [
+      { id: 'scheduler', label: 'Scheduler', description: 'Availability + invite links' },
+      { id: 'mail', label: 'Mail Blast', description: 'Newsletter / updates' },
+    ],
+    []
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -153,187 +166,195 @@ export default function ScheduleAdminPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSaveAvailability} className="bbm-contact-form">
-              <h3 className="bbm-contact-subtitle" style={{ textAlign: 'center' }}>Availability</h3>
+            <AdminCarouselNav items={adminPanels} activeId={activePanel} onChange={setActivePanel} />
 
-              {availabilityState.status === 'loading' && <p className="bbm-contact-text" style={{ textAlign: 'center' }}>Loading…</p>}
-              {availabilityState.status === 'error' && <div className="bbm-form-error">{availabilityState.error}</div>}
+            {activePanel === 'scheduler' ? (
+              <>
+                <form onSubmit={handleSaveAvailability} className="bbm-contact-form">
+                  <h3 className="bbm-contact-subtitle" style={{ textAlign: 'center' }}>Availability</h3>
 
-              <label className="bbm-form-label">
-                Timezone
-                <input
-                  className="bbm-form-input"
-                  value={availabilityDraft.timezone}
-                  onChange={(e) => setAvailabilityDraft((d) => ({ ...d, timezone: e.target.value }))}
-                  placeholder="America/Chicago"
-                />
-              </label>
+                  {availabilityState.status === 'loading' && <p className="bbm-contact-text" style={{ textAlign: 'center' }}>Loading…</p>}
+                  {availabilityState.status === 'error' && <div className="bbm-form-error">{availabilityState.error}</div>}
 
-              <div className="bbm-form-row">
-                <label className="bbm-form-label">
-                  Slot duration (minutes)
-                  <input
-                    className="bbm-form-input"
-                    type="number"
-                    min={10}
-                    max={180}
-                    value={availabilityDraft.slotDurationMinutes}
-                    onChange={(e) =>
-                      setAvailabilityDraft((d) => ({
-                        ...d,
-                        slotDurationMinutes: Number(e.target.value),
-                      }))
-                    }
-                  />
-                </label>
-
-                <label className="bbm-form-label">
-                  Days ahead
-                  <input
-                    className="bbm-form-input"
-                    type="number"
-                    min={1}
-                    max={60}
-                    value={availabilityDraft.daysAhead}
-                    onChange={(e) => setAvailabilityDraft((d) => ({ ...d, daysAhead: Number(e.target.value) }))}
-                  />
-                </label>
-              </div>
-
-              <label className="bbm-form-label">
-                Start days from now
-                <input
-                  className="bbm-form-input"
-                  type="number"
-                  min={0}
-                  max={14}
-                  value={availabilityDraft.startDaysFromNow}
-                  onChange={(e) =>
-                    setAvailabilityDraft((d) => ({
-                      ...d,
-                      startDaysFromNow: Number(e.target.value),
-                    }))
-                  }
-                />
-              </label>
-
-              <div>
-                <div className="bbm-contact-subtitle" style={{ marginTop: 8 }}>Weekly hours</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
-                  {availabilityDraft.days.map((day, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: '130px 1fr 1fr',
-                        gap: 10,
-                        alignItems: 'center',
-                      }}
-                    >
-                      <label className="bbm-form-label" style={{ flexDirection: 'row', alignItems: 'center', gap: 10, margin: 0 }}>
-                        <input
-                          type="checkbox"
-                          checked={day.enabled}
-                          onChange={(e) =>
-                            setAvailabilityDraft((d) => ({
-                              ...d,
-                              days: d.days.map((x, i) => (i === idx ? { ...x, enabled: e.target.checked } : x)),
-                            }))
-                          }
-                        />
-                        <span>{DAY_LABELS[idx]}</span>
-                      </label>
-
-                      <input
-                        className="bbm-form-input"
-                        type="time"
-                        value={day.start}
-                        disabled={!day.enabled}
-                        onChange={(e) =>
-                          setAvailabilityDraft((d) => ({
-                            ...d,
-                            days: d.days.map((x, i) => (i === idx ? { ...x, start: e.target.value } : x)),
-                          }))
-                        }
-                      />
-
-                      <input
-                        className="bbm-form-input"
-                        type="time"
-                        value={day.end}
-                        disabled={!day.enabled}
-                        onChange={(e) =>
-                          setAvailabilityDraft((d) => ({
-                            ...d,
-                            days: d.days.map((x, i) => (i === idx ? { ...x, end: e.target.value } : x)),
-                          }))
-                        }
-                      />
-                    </div>
-                  ))}
-                </div>
-                <p className="bbm-contact-text" style={{ textAlign: 'center', opacity: 0.85, fontSize: 14, marginTop: 10 }}>
-                  Times are interpreted in <b>{availabilityDraft.timezone}</b>.
-                </p>
-              </div>
-
-              <button className="bbm-form-submit" type="submit" disabled={availabilityState.status === 'saving'}>
-                {availabilityState.status === 'saving' ? 'Saving…' : 'Save availability'}
-              </button>
-            </form>
-
-            <hr style={{ margin: '28px 0', border: 'none', borderTop: '1px solid rgba(247, 200, 115, 0.22)' }} />
-
-            <form onSubmit={handleCreateInvite} className="bbm-contact-form">
-              <h3 className="bbm-contact-subtitle" style={{ textAlign: 'center' }}>Guest invite link</h3>
-
-              <div className="bbm-form-row">
-                <label className="bbm-form-label">
-                  Guest email
-                  <input
-                    className="bbm-form-input"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    placeholder="guest@example.com"
-                  />
-                </label>
-
-                <label className="bbm-form-label">
-                  Expires in (days)
-                  <input
-                    className="bbm-form-input"
-                    type="number"
-                    min={1}
-                    max={365}
-                    value={inviteDays}
-                    onChange={(e) => setInviteDays(e.target.value)}
-                  />
-                </label>
-              </div>
-
-              <button className="bbm-form-submit" type="submit" disabled={inviteState.status === 'loading'}>
-                {inviteState.status === 'loading' ? 'Generating…' : 'Generate link'}
-              </button>
-
-              {inviteState.status === 'error' && <div className="bbm-form-error">{inviteState.error}</div>}
-
-              {inviteState.status === 'ready' && (
-                <div>
                   <label className="bbm-form-label">
-                    Invite URL
+                    Timezone
                     <input
                       className="bbm-form-input"
-                      readOnly
-                      value={inviteState.data.inviteUrl}
-                      onFocus={(e) => e.target.select()}
+                      value={availabilityDraft.timezone}
+                      onChange={(e) => setAvailabilityDraft((d) => ({ ...d, timezone: e.target.value }))}
+                      placeholder="America/Chicago"
                     />
                   </label>
-                  <div className="bbm-form-success" style={{ marginTop: 10 }}>
-                    Expires: {new Date(inviteState.data.expiresAt).toLocaleString()}
+
+                  <div className="bbm-form-row">
+                    <label className="bbm-form-label">
+                      Slot duration (minutes)
+                      <input
+                        className="bbm-form-input"
+                        type="number"
+                        min={10}
+                        max={180}
+                        value={availabilityDraft.slotDurationMinutes}
+                        onChange={(e) =>
+                          setAvailabilityDraft((d) => ({
+                            ...d,
+                            slotDurationMinutes: Number(e.target.value),
+                          }))
+                        }
+                      />
+                    </label>
+
+                    <label className="bbm-form-label">
+                      Days ahead
+                      <input
+                        className="bbm-form-input"
+                        type="number"
+                        min={1}
+                        max={60}
+                        value={availabilityDraft.daysAhead}
+                        onChange={(e) => setAvailabilityDraft((d) => ({ ...d, daysAhead: Number(e.target.value) }))}
+                      />
+                    </label>
                   </div>
-                </div>
-              )}
-            </form>
+
+                  <label className="bbm-form-label">
+                    Start days from now
+                    <input
+                      className="bbm-form-input"
+                      type="number"
+                      min={0}
+                      max={14}
+                      value={availabilityDraft.startDaysFromNow}
+                      onChange={(e) =>
+                        setAvailabilityDraft((d) => ({
+                          ...d,
+                          startDaysFromNow: Number(e.target.value),
+                        }))
+                      }
+                    />
+                  </label>
+
+                  <div>
+                    <div className="bbm-contact-subtitle" style={{ marginTop: 8 }}>Weekly hours</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
+                      {availabilityDraft.days.map((day, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: '130px 1fr 1fr',
+                            gap: 10,
+                            alignItems: 'center',
+                          }}
+                        >
+                          <label className="bbm-form-label" style={{ flexDirection: 'row', alignItems: 'center', gap: 10, margin: 0 }}>
+                            <input
+                              type="checkbox"
+                              checked={day.enabled}
+                              onChange={(e) =>
+                                setAvailabilityDraft((d) => ({
+                                  ...d,
+                                  days: d.days.map((x, i) => (i === idx ? { ...x, enabled: e.target.checked } : x)),
+                                }))
+                              }
+                            />
+                            <span>{DAY_LABELS[idx]}</span>
+                          </label>
+
+                          <input
+                            className="bbm-form-input"
+                            type="time"
+                            value={day.start}
+                            disabled={!day.enabled}
+                            onChange={(e) =>
+                              setAvailabilityDraft((d) => ({
+                                ...d,
+                                days: d.days.map((x, i) => (i === idx ? { ...x, start: e.target.value } : x)),
+                              }))
+                            }
+                          />
+
+                          <input
+                            className="bbm-form-input"
+                            type="time"
+                            value={day.end}
+                            disabled={!day.enabled}
+                            onChange={(e) =>
+                              setAvailabilityDraft((d) => ({
+                                ...d,
+                                days: d.days.map((x, i) => (i === idx ? { ...x, end: e.target.value } : x)),
+                              }))
+                            }
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <p className="bbm-contact-text" style={{ textAlign: 'center', opacity: 0.85, fontSize: 14, marginTop: 10 }}>
+                      Times are interpreted in <b>{availabilityDraft.timezone}</b>.
+                    </p>
+                  </div>
+
+                  <button className="bbm-form-submit" type="submit" disabled={availabilityState.status === 'saving'}>
+                    {availabilityState.status === 'saving' ? 'Saving…' : 'Save availability'}
+                  </button>
+                </form>
+
+                <hr style={{ margin: '28px 0', border: 'none', borderTop: '1px solid rgba(247, 200, 115, 0.22)' }} />
+
+                <form onSubmit={handleCreateInvite} className="bbm-contact-form">
+                  <h3 className="bbm-contact-subtitle" style={{ textAlign: 'center' }}>Guest invite link</h3>
+
+                  <div className="bbm-form-row">
+                    <label className="bbm-form-label">
+                      Guest email
+                      <input
+                        className="bbm-form-input"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                        placeholder="guest@example.com"
+                      />
+                    </label>
+
+                    <label className="bbm-form-label">
+                      Expires in (days)
+                      <input
+                        className="bbm-form-input"
+                        type="number"
+                        min={1}
+                        max={365}
+                        value={inviteDays}
+                        onChange={(e) => setInviteDays(e.target.value)}
+                      />
+                    </label>
+                  </div>
+
+                  <button className="bbm-form-submit" type="submit" disabled={inviteState.status === 'loading'}>
+                    {inviteState.status === 'loading' ? 'Generating…' : 'Generate link'}
+                  </button>
+
+                  {inviteState.status === 'error' && <div className="bbm-form-error">{inviteState.error}</div>}
+
+                  {inviteState.status === 'ready' && (
+                    <div>
+                      <label className="bbm-form-label">
+                        Invite URL
+                        <input
+                          className="bbm-form-input"
+                          readOnly
+                          value={inviteState.data.inviteUrl}
+                          onFocus={(e) => e.target.select()}
+                        />
+                      </label>
+                      <div className="bbm-form-success" style={{ marginTop: 10 }}>
+                        Expires: {new Date(inviteState.data.expiresAt).toLocaleString()}
+                      </div>
+                    </div>
+                  )}
+                </form>
+              </>
+            ) : (
+              <MailBlastPanel sessionEmail={sessionState.email} />
+            )}
           </div>
         )}
       </section>

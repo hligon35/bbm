@@ -89,3 +89,15 @@ export async function adminGetSession() {
 export async function adminLogout() {
   return postJson('/api/schedule/admin/auth/logout', {});
 }
+
+export async function adminNewsletterGetSubscribers() {
+  return postJson('/api/schedule/admin/newsletter/subscribers/get', {});
+}
+
+export async function adminNewsletterSetSubscribers({ subscribers }) {
+  return postJson('/api/schedule/admin/newsletter/subscribers/set', { subscribers });
+}
+
+export async function adminNewsletterSend({ subject, message, recipients, testEmail }) {
+  return postJson('/api/schedule/admin/newsletter/send', { subject, message, recipients, testEmail });
+}

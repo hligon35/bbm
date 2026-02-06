@@ -1,3 +1,5 @@
+import { sendEmail } from '../../email';
+
 function jsonResponse(body, { status = 200, headers = {} } = {}) {
   return new Response(JSON.stringify(body), {
     status,
@@ -156,28 +158,16 @@ export async function verifyAdminSession(request, env) {
 }
 
 async function sendOtpEmail(env, { toEmail, code }) {
-  if (!env.EMAIL_FROM) throw new Error('Email sender not configured');
-
   const subject = 'Your Black Bridge Mindset admin login code';
   const text = `Your login code is: ${code}\n\nThis code expires in 10 minutes.`;
 
-  const payload = {
-    personalizations: [{ to: [{ email: toEmail }] }],
-    from: { email: env.EMAIL_FROM, name: env.FROM_NAME || 'Website' },
+  await sendEmail(env, {
+    to: toEmail,
+    fromEmail: env.EMAIL_FROM,
+    fromName: env.FROM_NAME || 'Website',
     subject,
-    content: [{ type: 'text/plain', value: text }],
-  };
-
-  const res = await fetch('https://api.mailchannels.net/tx/v1/send', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    text,
   });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw new Error(`Mail send failed (${res.status}). ${body}`);
-  }
 }
 
 async function rateLimit(env, { key, limit, windowSeconds }) {
