@@ -5,6 +5,9 @@ import Episodes from './Episodes';
 import Podcast from './Podcast';
 import Trio from './Trio';
 import Contact from './Contact';
+import ScheduleInvitePage from './schedule/ScheduleInvitePage';
+import ScheduleAdminPage from './schedule/ScheduleAdminPage';
+import AdminLoginPage from './schedule/AdminLoginPage';
 
 export default function Router() {
   return (
@@ -15,6 +18,12 @@ export default function Router() {
         <Route path="/podcast" element={<Podcast />} />
         <Route path="/trio" element={<Trio />} />
         <Route path="/contact" element={<Contact />} />
+        {/* Hidden admin login route (intentionally not linked in navigation) */}
+        <Route path="/admin" element={<AdminLoginPage />} />
+        {/* Hidden invite-only route (intentionally not linked in navigation) */}
+        <Route path="/schedule/:token" element={<ScheduleInvitePage />} />
+        {/* Hidden admin route (intentionally not linked in navigation) */}
+        <Route path="/schedule/admin" element={<ScheduleAdminPage />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,0 +1,91 @@
+function jsonHeaders() {
+  return {
+    'Content-Type': 'application/json',
+  };
+}
+
+export function getScheduleApiBase() {
+  const explicit = String(import.meta.env.VITE_SCHEDULE_API_BASE || '').trim();
+
+  // In dev we want the API host to match the page host so the admin session
+  // cookie (SameSite=Strict) is actually sent.
+  // Example: page on http://localhost:* should call http://localhost:8787 (not 127.0.0.1).
+  if (import.meta.env.DEV && typeof window !== 'undefined') {
+    const pageHost = window.location.hostname;
+    const pageProtocol = window.location.protocol;
+    const defaultBase = `${pageProtocol}//${pageHost}:8787`;
+
+    if (!explicit) return defaultBase;
+
+    try {
+      const u = new URL(explicit);
+      const isLoopback = (h) => h === 'localhost' || h === '127.0.0.1';
+      if (isLoopback(u.hostname) && isLoopback(pageHost) && u.hostname !== pageHost) {
+        u.hostname = pageHost;
+        return u.toString().replace(/\/$/, '');
+      }
+    } catch {
+      // fall through
+    }
+
+    return explicit;
+  }
+
+  return explicit;
+}
+
+function apiUrl(path) {
+  const base = getScheduleApiBase();
+  if (!base) return path;
+  return base.replace(/\/$/, '') + path;
+}
+
+async function postJson(path, body) {
+  const res = await fetch(apiUrl(path), {
+    method: 'POST',
+    headers: jsonHeaders(),
+    credentials: 'include',
+    body: JSON.stringify(body || {}),
+  });
+
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    data = null;
+  }
+
+  if (!res.ok) {
+    return { ok: false, error: data?.error || `Request failed (${res.status})` };
+  }
+
+  return { ok: true, data };
+}
+
+export async function adminGetAvailability() {
+  return postJson('/api/schedule/admin/availability/get', {});
+}
+
+export async function adminSetAvailability({ availability }) {
+  return postJson('/api/schedule/admin/availability/set', { availability });
+}
+
+export async function adminCreateInvite({ email, days }) {
+  return postJson('/api/schedule/admin/invite', { email, days });
+}
+
+export async function adminAuthStart({ email }) {
+  return postJson('/api/schedule/admin/auth/start', { email });
+}
+
+export async function adminAuthVerify({ email, code }) {
+  return postJson('/api/schedule/admin/auth/verify', { email, code });
+}
+
+export async function adminGetSession() {
+  return postJson('/api/schedule/admin/auth/session', {});
+}
+
+export async function adminLogout() {
+  return postJson('/api/schedule/admin/auth/logout', {});
+}

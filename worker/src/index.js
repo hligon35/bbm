@@ -1,3 +1,5 @@
+import { handleScheduleRequest } from './api/schedule';
+
 function jsonResponse(body, { status = 200, headers = {} } = {}) {
   return new Response(JSON.stringify(body), {
     status,
@@ -121,6 +123,14 @@ async function sendViaMailChannels(env, { replyToEmail, subject, text, html }) {
 
 export default {
   async fetch(request, env) {
+    const url = new URL(request.url);
+
+    // Schedule API is fully isolated under worker/src/api/schedule.
+    // This early dispatch keeps the existing contact endpoint behavior intact.
+    if (url.pathname.startsWith('/api/schedule/')) {
+      return handleScheduleRequest(request, env);
+    }
+
     const origin = request.headers.get('Origin') || '';
     const allowedOrigins = parseAllowedOrigins(env);
     const cors = corsHeadersFor(origin, allowedOrigins);

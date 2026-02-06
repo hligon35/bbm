@@ -2,10 +2,14 @@ name = "bbm-contact"
 main = "src/index.js"
 compatibility_date = "2026-02-01"
 
-# Route this Worker under your site (adjust domain as needed):
-# routes = [
-#   { pattern = "blackbridgemindset.com/api/contact*", zone_name = "blackbridgemindset.com" }
-# ]
+# Route this Worker under your site (API only).
+# This Worker handles both:
+# - /api/contact*
+# - /api/schedule/*
+routes = [
+	{ pattern = "blackbridgemindset.com/api/*", zone_name = "blackbridgemindset.com" },
+	{ pattern = "www.blackbridgemindset.com/api/*", zone_name = "blackbridgemindset.com" }
+]
 
 [vars]
 # Where contact emails get delivered
@@ -18,4 +22,53 @@ FROM_NAME = "Black Bridge Mindset"
 
 # Comma-separated allowlist of origins for CORS. Example:
 # ALLOWED_ORIGINS = "https://blackbridgemindset.com,https://www.blackbridgemindset.com"
-ALLOWED_ORIGINS = "*"
+ALLOWED_ORIGINS = "https://blackbridgemindset.com,https://www.blackbridgemindset.com"
+
+# Scheduling (invite-only) scaffold
+# -------------------------------
+# Local preview only. Keep this false in production.
+SCHEDULE_DEV_MODE = "false"
+
+# In production, you can require that the booking email matches the invite email.
+SCHEDULE_ENFORCE_EMAIL_MATCH = "true"
+
+# Admin API host allowlist (prevents bypass via *.workers.dev)
+SCHEDULE_ADMIN_ALLOWED_HOSTS = "blackbridgemindset.com,www.blackbridgemindset.com"
+
+# Admin UI authentication (set this as a secret in production)
+# Run: wrangler secret put SCHEDULE_ADMIN_TOKEN --cwd worker
+# Then paste it into /schedule/admin when managing availability.
+# SCHEDULE_ADMIN_TOKEN = "<set via wrangler secret>"
+
+# Admin OTP login (recommended):
+# - Add this allowlist under [vars] (comma-separated emails)
+# - Set secrets via `wrangler secret put ... --cwd worker`
+#
+# ADMIN_ALLOWED_EMAILS = "you@example.com"
+# Secrets:
+# - ADMIN_OTP_SECRET
+# - ADMIN_SESSION_SECRET
+
+# Required in production: KV namespace for schedule tokens
+ [[kv_namespaces]]
+ binding = "SCHEDULE_TOKENS"
+ id = "305ba99a1cc645be98ea3e552fb954b5"
+ preview_id = "3ec4987be52041c8b59d4b77681baa76"
+
+# Required for admin-managed availability config
+[[kv_namespaces]]
+binding = "SCHEDULE_CONFIG"
+id = "0da39f06859d41d8b4720bdd1ff1b8ef"
+preview_id = "927704e043e44de2bf123f9a68473e19"
+
+# Optional: KV namespace for storing bookings (instead of D1)
+# [[kv_namespaces]]
+# binding = "SCHEDULE_BOOKINGS"
+# id = "<kv_namespace_id>"
+# preview_id = "<kv_preview_id>"
+
+# Optional: D1 database for storing bookings (recommended)
+ [[d1_databases]]
+ binding = "SCHEDULE_DB"
+ database_name = "bb_guest_schedule"
+ database_id = "f74dd83d-160d-4a1a-823e-8c8a9cb35ad5"
