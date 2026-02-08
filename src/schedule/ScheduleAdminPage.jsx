@@ -35,9 +35,12 @@ function defaultAvailability() {
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export default function ScheduleAdminPage() {
+export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEmail = null, onUnauthorized, onLoggedOut }) {
   const navigate = useNavigate();
-  const [sessionState, setSessionState] = useState({ status: 'loading', email: null });
+  const [sessionState, setSessionState] = useState({
+    status: skipSessionCheck ? 'ready' : 'loading',
+    email: sessionEmail,
+  });
 
   const [activePanel, setActivePanel] = useState('scheduler');
 
@@ -62,12 +65,21 @@ export default function ScheduleAdminPage() {
     let cancelled = false;
 
     async function checkSession() {
+      if (skipSessionCheck) {
+        setSessionState({ status: 'ready', email: sessionEmail || null });
+        return;
+      }
+
       const res = await adminGetSession();
       if (cancelled) return;
 
       if (!res.ok || !res.data?.ok) {
         setSessionState({ status: 'unauthorized', email: null });
-        navigate('/admin', { replace: true });
+        if (typeof onUnauthorized === 'function') {
+          onUnauthorized();
+        } else {
+          navigate('/admin', { replace: true });
+        }
         return;
       }
 
@@ -78,7 +90,7 @@ export default function ScheduleAdminPage() {
     return () => {
       cancelled = true;
     };
-  }, [navigate]);
+  }, [navigate, onUnauthorized, sessionEmail, skipSessionCheck]);
 
   useEffect(() => {
     let cancelled = false;
@@ -108,7 +120,11 @@ export default function ScheduleAdminPage() {
 
   async function handleLogout() {
     await adminLogout();
-    navigate('/admin', { replace: true });
+    if (typeof onLoggedOut === 'function') {
+      onLoggedOut();
+    } else {
+      navigate('/admin', { replace: true });
+    }
   }
 
   async function handleSaveAvailability(e) {

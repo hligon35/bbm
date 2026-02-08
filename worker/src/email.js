@@ -43,26 +43,6 @@ function makePayload({ to, fromEmail, fromName, subject, text, html, replyTo }) 
   return payload;
 }
 
-async function sendViaSendGrid(env, payload) {
-  const key = String(env.SENDGRID_API_KEY || '').trim();
-  if (!key) throw new Error('SENDGRID_API_KEY not configured');
-
-  const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${key}`,
-    },
-    body: JSON.stringify(payload),
-  });
-
-  // SendGrid often returns 202 Accepted on success.
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw new Error(`SendGrid send failed (${res.status}). ${body}`);
-  }
-}
-
 async function sendViaMailChannels(payload) {
   const res = await fetch('https://api.mailchannels.net/tx/v1/send', {
     method: 'POST',
@@ -77,16 +57,11 @@ async function sendViaMailChannels(payload) {
 }
 
 /**
- * Sends email using SendGrid when configured.
- * Falls back to MailChannels if SENDGRID_API_KEY is missing.
+ * Sends email using MailChannels.
  */
 export async function sendEmail(env, { to, fromEmail, fromName, subject, text, html, replyTo }) {
   const payload = makePayload({ to, fromEmail, fromName, subject, text, html, replyTo });
 
-  const hasSendGrid = Boolean(String(env.SENDGRID_API_KEY || '').trim());
-  if (hasSendGrid) {
-    return sendViaSendGrid(env, payload);
-  }
-
+  void env;
   return sendViaMailChannels(payload);
 }

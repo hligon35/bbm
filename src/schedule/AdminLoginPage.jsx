@@ -5,7 +5,7 @@ import Layout from '../Layout';
 
 import { adminAuthStart, adminAuthVerify, adminGetSession } from './utils/adminApi';
 
-export default function AdminLoginPage() {
+export default function AdminLoginPage({ onSuccess }) {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -23,7 +23,11 @@ export default function AdminLoginPage() {
       const res = await adminGetSession();
       if (cancelled) return;
       if (res.ok && res.data?.ok) {
-        navigate('/schedule/admin', { replace: true });
+        if (typeof onSuccess === 'function') {
+          await onSuccess();
+        } else {
+          navigate('/admin', { replace: true });
+        }
       }
     }
 
@@ -31,7 +35,7 @@ export default function AdminLoginPage() {
     return () => {
       cancelled = true;
     };
-  }, [navigate]);
+  }, [navigate, onSuccess]);
 
   async function handleSendCode(e) {
     e.preventDefault();
@@ -91,7 +95,11 @@ export default function AdminLoginPage() {
     // Confirm the cookie-based session actually stuck before redirecting.
     const session = await adminGetSession();
     if (session.ok && session.data?.ok) {
-      navigate('/schedule/admin', { replace: true });
+      if (typeof onSuccess === 'function') {
+        await onSuccess();
+      } else {
+        navigate('/admin', { replace: true });
+      }
       return;
     }
 
