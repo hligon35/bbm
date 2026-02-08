@@ -74,12 +74,12 @@ export async function adminCreateInvite({ email, days }) {
   return postJson('/api/schedule/admin/invite', { email, days });
 }
 
-export async function adminAuthStart({ email }) {
-  return postJson('/api/schedule/admin/auth/start', { email });
+export async function adminAuthStart({ phone }) {
+  return postJson('/api/schedule/admin/auth/start', { phone });
 }
 
-export async function adminAuthVerify({ email, code }) {
-  return postJson('/api/schedule/admin/auth/verify', { email, code });
+export async function adminAuthVerify({ phone, code }) {
+  return postJson('/api/schedule/admin/auth/verify', { phone, code });
 }
 
 export async function adminGetSession() {

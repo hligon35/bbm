@@ -7,16 +7,16 @@ import ScheduleAdminPage from './ScheduleAdminPage';
 import { adminGetSession } from './utils/adminApi';
 
 export default function AdminPage() {
-  const [sessionState, setSessionState] = useState({ status: 'loading', email: null });
+  const [sessionState, setSessionState] = useState({ status: 'loading', phone: null });
 
   const refreshSession = useCallback(async () => {
     const res = await adminGetSession();
     if (res.ok && res.data?.ok) {
-      setSessionState({ status: 'ready', email: res.data.email || null });
+      setSessionState({ status: 'ready', phone: res.data.phone || null });
       return true;
     }
 
-    setSessionState({ status: 'unauthorized', email: null });
+    setSessionState({ status: 'unauthorized', phone: null });
     return false;
   }, []);
 
@@ -28,9 +28,9 @@ export default function AdminPage() {
       if (cancelled) return;
 
       if (res.ok && res.data?.ok) {
-        setSessionState({ status: 'ready', email: res.data.email || null });
+        setSessionState({ status: 'ready', phone: res.data.phone || null });
       } else {
-        setSessionState({ status: 'unauthorized', email: null });
+        setSessionState({ status: 'unauthorized', phone: null });
       }
     }
 
@@ -60,9 +60,9 @@ export default function AdminPage() {
   return (
     <ScheduleAdminPage
       skipSessionCheck
-      sessionEmail={sessionState.email}
-      onUnauthorized={() => setSessionState({ status: 'unauthorized', email: null })}
-      onLoggedOut={() => setSessionState({ status: 'unauthorized', email: null })}
+      sessionEmail={null}
+      onUnauthorized={() => setSessionState({ status: 'unauthorized', phone: null })}
+      onLoggedOut={() => setSessionState({ status: 'unauthorized', phone: null })}
     />
   );
 }

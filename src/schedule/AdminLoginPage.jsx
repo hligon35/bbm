@@ -8,7 +8,7 @@ import { adminAuthStart, adminAuthVerify, adminGetSession } from './utils/adminA
 export default function AdminLoginPage({ onSuccess }) {
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
 
   const [step, setStep] = useState('email'); // email | code
@@ -42,14 +42,14 @@ export default function AdminLoginPage({ onSuccess }) {
     setError('');
     setInfo('');
 
-    const clean = email.trim();
-    if (!clean || !clean.includes('@')) {
-      setError('Please enter a valid email.');
+    const clean = phone.trim();
+    if (!clean || (!clean.startsWith('+') && clean.replace(/[^0-9]/g, '').length < 8)) {
+      setError('Please enter a valid phone number.');
       return;
     }
 
     setStatus('loading');
-    const res = await adminAuthStart({ email: clean });
+    const res = await adminAuthStart({ phone: clean });
     setStatus('idle');
 
     if (!res.ok) {
@@ -61,7 +61,7 @@ export default function AdminLoginPage({ onSuccess }) {
     if (import.meta.env.DEV && res.data?.devCode) {
       setInfo(`DEV MODE: Your code is ${res.data.devCode}`);
     } else {
-      setInfo('If your email is allowed, a code was sent.');
+      setInfo('If your phone is allowed, a code was sent.');
     }
   }
 
@@ -70,11 +70,11 @@ export default function AdminLoginPage({ onSuccess }) {
     setError('');
     setInfo('');
 
-    const cleanEmail = email.trim();
+    const cleanPhone = phone.trim();
     const cleanCode = code.trim();
 
-    if (!cleanEmail || !cleanEmail.includes('@')) {
-      setError('Please enter a valid email.');
+    if (!cleanPhone || (!cleanPhone.startsWith('+') && cleanPhone.replace(/[^0-9]/g, '').length < 8)) {
+      setError('Please enter a valid phone number.');
       return;
     }
 
@@ -84,7 +84,7 @@ export default function AdminLoginPage({ onSuccess }) {
     }
 
     setStatus('loading');
-    const res = await adminAuthVerify({ email: cleanEmail, code: cleanCode });
+    const res = await adminAuthVerify({ phone: cleanPhone, code: cleanCode });
     setStatus('idle');
 
     if (!res.ok) {
@@ -123,14 +123,13 @@ export default function AdminLoginPage({ onSuccess }) {
           </h3>
 
           <label className="bbm-form-label">
-            Email
+            Phone
             <input
               className="bbm-form-input"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              autoComplete="email"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+13125551234"
+              autoComplete="tel"
             />
           </label>
 
