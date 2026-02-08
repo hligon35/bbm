@@ -1,4 +1,4 @@
-import { normalizePhoneForStorage, sendSms } from '../../sms';
+import { sendEmail } from '../../email';
 
 function jsonResponse(body, { status = 200, headers = {} } = {}) {
   return new Response(JSON.stringify(body), {
@@ -44,19 +44,23 @@ function enforceAdminHost(request, env, corsHeaders) {
   return null;
 }
 
-function parseAllowedPhones(env) {
-  const raw = String(env.ADMIN_ALLOWED_PHONES || '').trim();
+function normalizeEmail(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function parseAllowedEmails(env) {
+  const raw = String(env.ADMIN_ALLOWED_EMAILS || '').trim();
   if (!raw) return [];
   return raw
     .split(',')
-    .map((s) => normalizePhoneForStorage(s))
+    .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
 }
 
-function isAllowedPhone(env, phone) {
-  const list = parseAllowedPhones(env);
+function isAllowedEmail(env, email) {
+  const list = parseAllowedEmails(env);
   if (list.length === 0) return false;
-  return list.includes(phone);
+  return list.includes(email);
 }
 
 function randomOtpCode() {
@@ -140,22 +144,30 @@ export async function verifyAdminSession(request, env) {
     return { ok: false, status: 401, error: 'Unauthorized' };
   }
 
-  const phone = normalizePhoneForStorage(decoded?.phone);
+  const email = normalizeEmail(decoded?.email);
   const exp = Number(decoded?.exp);
-  if (!phone || !Number.isFinite(exp) || Date.now() > exp) {
+  if (!email || !Number.isFinite(exp) || Date.now() > exp) {
     return { ok: false, status: 401, error: 'Unauthorized' };
   }
 
-  if (!isAllowedPhone(env, phone)) {
+  if (!isAllowedEmail(env, email)) {
     return { ok: false, status: 401, error: 'Unauthorized' };
   }
 
-  return { ok: true, status: 200, phone };
+  return { ok: true, status: 200, email };
 }
 
-async function sendOtpSms(env, { toPhone, code }) {
-  const text = `Your Black Bridge Mindset admin login code is: ${code}. This code expires in 10 minutes.`;
-  await sendSms(env, { to: toPhone, body: text });
+async function sendOtpEmail(env, { toEmail, code }) {
+  const subject = 'Your Black Bridge Mindset admin login code';
+  const text = `Your login code is: ${code}\n\nThis code expires in 10 minutes.`;
+
+  await sendEmail(env, {
+    to: toEmail,
+    fromEmail: env.EMAIL_FROM,
+    fromName: env.FROM_NAME || 'Website',
+    subject,
+    text,
+  });
 }
 
 async function rateLimit(env, { key, limit, windowSeconds }) {
@@ -182,7 +194,7 @@ export async function handleAdminAuth(request, env, corsHeaders) {
       return jsonResponse({ ok: false, error: session.error }, { status: session.status, headers: corsHeaders });
     }
 
-    return jsonResponse({ ok: true, phone: session.phone }, { status: 200, headers: corsHeaders });
+    return jsonResponse({ ok: true, email: session.email }, { status: 200, headers: corsHeaders });
   }
 
   if (url.pathname === '/api/schedule/admin/auth/logout') {
@@ -206,12 +218,12 @@ export async function handleAdminAuth(request, env, corsHeaders) {
   }
 
   if (url.pathname === '/api/schedule/admin/auth/start') {
-    const phone = normalizePhoneForStorage(body?.phone);
-    if (!phone) {
-      return jsonResponse({ ok: false, error: 'Invalid phone' }, { status: 400, headers: corsHeaders });
+    const email = normalizeEmail(body?.email);
+    if (!email || !email.includes('@')) {
+      return jsonResponse({ ok: false, error: 'Invalid email' }, { status: 400, headers: corsHeaders });
     }
 
-    if (!isAllowedPhone(env, phone)) {
+    if (!isAllowedEmail(env, email)) {
       // Avoid account enumeration.
       return jsonResponse({ ok: true }, { status: 200, headers: corsHeaders });
     }
@@ -219,7 +231,7 @@ export async function handleAdminAuth(request, env, corsHeaders) {
     const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || 'unknown';
 
     const rl1 = await rateLimit(env, { key: `ip:${ip}`, limit: 10, windowSeconds: 600 });
-    const rl2 = await rateLimit(env, { key: `phone:${phone}`, limit: 5, windowSeconds: 600 });
+    const rl2 = await rateLimit(env, { key: `email:${email}`, limit: 5, windowSeconds: 600 });
     if (!rl1.ok || !rl2.ok) {
       return jsonResponse({ ok: false, error: 'Too many attempts' }, { status: 429, headers: corsHeaders });
     }
@@ -234,17 +246,17 @@ export async function handleAdminAuth(request, env, corsHeaders) {
     }
 
     const code = randomOtpCode();
-    const hash = await sha256Base64Url(`${otpSecret}:${phone}:${code}`);
+    const hash = await sha256Base64Url(`${otpSecret}:${email}:${code}`);
 
-    await env.SCHEDULE_CONFIG.put(`admin:otp:${phone}`, hash, { expirationTtl: 600 });
-    await env.SCHEDULE_CONFIG.put(`admin:otp_attempts:${phone}`, '0', { expirationTtl: 600 });
+    await env.SCHEDULE_CONFIG.put(`admin:otp:${email}`, hash, { expirationTtl: 600 });
+    await env.SCHEDULE_CONFIG.put(`admin:otp_attempts:${email}`, '0', { expirationTtl: 600 });
 
     if (isDevMode(env)) {
       return jsonResponse({ ok: true, devCode: code }, { status: 200, headers: corsHeaders });
     }
 
     try {
-      await sendOtpSms(env, { toPhone: phone, code });
+      await sendOtpEmail(env, { toEmail: email, code });
     } catch (e) {
       return jsonResponse(
         { ok: false, error: e instanceof Error ? e.message : 'Failed to send code' },
@@ -256,14 +268,14 @@ export async function handleAdminAuth(request, env, corsHeaders) {
   }
 
   if (url.pathname === '/api/schedule/admin/auth/verify') {
-    const phone = normalizePhoneForStorage(body?.phone);
+    const email = normalizeEmail(body?.email);
     const code = String(body?.code || '').trim();
 
-    if (!phone || !code) {
+    if (!email || !code) {
       return jsonResponse({ ok: false, error: 'Missing fields' }, { status: 400, headers: corsHeaders });
     }
 
-    if (!isAllowedPhone(env, phone)) {
+    if (!isAllowedEmail(env, email)) {
       return jsonResponse({ ok: false, error: 'Invalid code' }, { status: 401, headers: corsHeaders });
     }
 
@@ -271,7 +283,7 @@ export async function handleAdminAuth(request, env, corsHeaders) {
       return jsonResponse({ ok: false, error: 'OTP storage not configured' }, { status: 501, headers: corsHeaders });
     }
 
-    const attemptsKey = `admin:otp_attempts:${phone}`;
+    const attemptsKey = `admin:otp_attempts:${email}`;
     const attempts = Number(await env.SCHEDULE_CONFIG.get(attemptsKey));
     if (Number.isFinite(attempts) && attempts >= 5) {
       return jsonResponse({ ok: false, error: 'Too many attempts' }, { status: 429, headers: corsHeaders });
@@ -282,8 +294,8 @@ export async function handleAdminAuth(request, env, corsHeaders) {
       return jsonResponse({ ok: false, error: 'OTP secret not configured' }, { status: 501, headers: corsHeaders });
     }
 
-    const expectedHash = await env.SCHEDULE_CONFIG.get(`admin:otp:${phone}`);
-    const gotHash = await sha256Base64Url(`${otpSecret}:${phone}:${code}`);
+    const expectedHash = await env.SCHEDULE_CONFIG.get(`admin:otp:${email}`);
+    const gotHash = await sha256Base64Url(`${otpSecret}:${email}:${code}`);
 
     if (!expectedHash || expectedHash !== gotHash) {
       const next = Number.isFinite(attempts) ? attempts + 1 : 1;
@@ -291,7 +303,7 @@ export async function handleAdminAuth(request, env, corsHeaders) {
       return jsonResponse({ ok: false, error: 'Invalid code' }, { status: 401, headers: corsHeaders });
     }
 
-    await env.SCHEDULE_CONFIG.delete(`admin:otp:${phone}`);
+    await env.SCHEDULE_CONFIG.delete(`admin:otp:${email}`);
     await env.SCHEDULE_CONFIG.delete(attemptsKey);
 
     const sessionSecret = String(env.ADMIN_SESSION_SECRET || '').trim();
@@ -300,7 +312,7 @@ export async function handleAdminAuth(request, env, corsHeaders) {
     }
 
     const sessionExpMs = Date.now() + 12 * 60 * 60 * 1000;
-    const payloadObj = { phone, exp: sessionExpMs };
+    const payloadObj = { email, exp: sessionExpMs };
     const payloadJson = JSON.stringify(payloadObj);
     const payloadB64 = base64UrlEncode(new TextEncoder().encode(payloadJson));
     const sig = await hmacSha256Base64Url(sessionSecret, payloadB64);

@@ -5,10 +5,28 @@ import Layout from '../Layout';
 
 import { adminAuthStart, adminAuthVerify, adminGetSession } from './utils/adminApi';
 
+function looksLikePhone(value) {
+  const v = String(value || '').trim();
+  if (!v) return false;
+  if (v.startsWith('+')) return true;
+  const digits = v.replace(/[^0-9]/g, '');
+  const nonEmailCharsOnly = v.replace(/[0-9\s().-]/g, '') === '';
+  return digits.length >= 8 && nonEmailCharsOnly;
+}
+
+function isValidEmail(value) {
+  const v = String(value || '').trim();
+  if (!v) return false;
+  if (v.length > 120) return false;
+  if (v.includes(' ')) return false;
+  // Simple sanity check (not RFC-complete, but prevents phone-like inputs).
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+}
+
 export default function AdminLoginPage({ onSuccess }) {
   const navigate = useNavigate();
 
-  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
 
   const [step, setStep] = useState('email'); // email | code
@@ -42,14 +60,19 @@ export default function AdminLoginPage({ onSuccess }) {
     setError('');
     setInfo('');
 
-    const clean = phone.trim();
-    if (!clean || (!clean.startsWith('+') && clean.replace(/[^0-9]/g, '').length < 8)) {
-      setError('Please enter a valid phone number.');
+    const clean = email.trim();
+    if (looksLikePhone(clean)) {
+      setError('Email only. Please enter your email address.');
+      return;
+    }
+
+    if (!isValidEmail(clean)) {
+      setError('Please enter a valid email address.');
       return;
     }
 
     setStatus('loading');
-    const res = await adminAuthStart({ phone: clean });
+    const res = await adminAuthStart({ email: clean });
     setStatus('idle');
 
     if (!res.ok) {
@@ -61,7 +84,7 @@ export default function AdminLoginPage({ onSuccess }) {
     if (import.meta.env.DEV && res.data?.devCode) {
       setInfo(`DEV MODE: Your code is ${res.data.devCode}`);
     } else {
-      setInfo('If your phone is allowed, a code was sent.');
+      setInfo('If your email is allowed, a code was sent.');
     }
   }
 
@@ -70,11 +93,16 @@ export default function AdminLoginPage({ onSuccess }) {
     setError('');
     setInfo('');
 
-    const cleanPhone = phone.trim();
+    const cleanEmail = email.trim();
     const cleanCode = code.trim();
 
-    if (!cleanPhone || (!cleanPhone.startsWith('+') && cleanPhone.replace(/[^0-9]/g, '').length < 8)) {
-      setError('Please enter a valid phone number.');
+    if (looksLikePhone(cleanEmail)) {
+      setError('Email only. Please enter your email address.');
+      return;
+    }
+
+    if (!isValidEmail(cleanEmail)) {
+      setError('Please enter a valid email address.');
       return;
     }
 
@@ -84,7 +112,7 @@ export default function AdminLoginPage({ onSuccess }) {
     }
 
     setStatus('loading');
-    const res = await adminAuthVerify({ phone: cleanPhone, code: cleanCode });
+    const res = await adminAuthVerify({ email: cleanEmail, code: cleanCode });
     setStatus('idle');
 
     if (!res.ok) {
@@ -123,13 +151,18 @@ export default function AdminLoginPage({ onSuccess }) {
           </h3>
 
           <label className="bbm-form-label">
-            Phone
+            Email
             <input
               className="bbm-form-input"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+13125551234"
-              autoComplete="tel"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              autoComplete="email"
+              inputMode="email"
+              autoCapitalize="none"
+              spellCheck={false}
+              required
             />
           </label>
 

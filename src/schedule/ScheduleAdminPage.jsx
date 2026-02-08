@@ -369,7 +369,7 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
                 </form>
               </>
             ) : (
-              <MailBlastPanel sessionEmail={null} />
+              <MailBlastPanel sessionEmail={sessionState.email} />
             )}
           </div>
         )}
