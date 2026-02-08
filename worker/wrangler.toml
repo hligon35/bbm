@@ -22,8 +22,8 @@ FROM_NAME = "Black Bridge Mindset"
 
 # Email delivery
 # --------------
-# This worker sends using MailChannels.
-# (If you later re-enable SendGrid, add SENDGRID_API_KEY as a secret.)
+# This worker sends using SendGrid when SENDGRID_API_KEY is configured as a secret.
+# It will fall back to MailChannels if no SendGrid key is present.
 
 # Comma-separated allowlist of origins for CORS. Example:
 # ALLOWED_ORIGINS = "https://blackbridgemindset.com,https://www.blackbridgemindset.com"
