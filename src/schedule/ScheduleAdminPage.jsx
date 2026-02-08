@@ -9,7 +9,6 @@ import {
   adminGetSession,
   adminLogout,
   adminSetAvailability,
-  getScheduleApiBase,
 } from './utils/adminApi';
 
 import AdminCarouselNav from './components/AdminCarouselNav';
@@ -50,8 +49,6 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteDays, setInviteDays] = useState('7');
   const [inviteState, setInviteState] = useState({ status: 'idle', data: null, error: null });
-
-  const apiBase = useMemo(() => getScheduleApiBase(), []);
 
   const adminPanels = useMemo(
     () => [
@@ -160,28 +157,19 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
   return (
     <Layout>
       <section className="bbm-section">
-        <h2>Scheduling Admin</h2>
-        <p className="bbm-contact-text" style={{ textAlign: 'center' }}>
-          Hidden admin page for setting availability and creating invite links.
-        </p>
-
-        <p className="bbm-contact-text" style={{ textAlign: 'center', opacity: 0.9, fontSize: 14 }}>
-          API Base:{' '}
-          <span style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' }}>
-            {apiBase || '(same-origin)'}
-          </span>
-        </p>
+        <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <h2 style={{ margin: 0 }}>Admin</h2>
+          {sessionState.status === 'ready' ? (
+            <button className="bbm-form-submit" type="button" onClick={handleLogout} style={{ marginTop: 0 }}>
+              Log out
+            </button>
+          ) : null}
+        </div>
 
         {sessionState.status !== 'ready' ? (
           <p className="bbm-contact-text" style={{ textAlign: 'center' }}>Checking session…</p>
         ) : (
           <div style={{ maxWidth: 760, margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-              <button className="bbm-form-submit" type="button" onClick={handleLogout}>
-                Log out
-              </button>
-            </div>
-
             <AdminCarouselNav items={adminPanels} activeId={activePanel} onChange={setActivePanel} />
 
             {activePanel === 'scheduler' ? (
