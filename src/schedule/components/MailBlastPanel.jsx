@@ -35,7 +35,9 @@ function formatList(emails) {
 export default function MailBlastPanel({ sessionEmail }) {
   const apiBase = useMemo(() => getScheduleApiBase(), []);
 
-  const [subscribersText, setSubscribersText] = useState('');
+  const [subscribers, setSubscribers] = useState([]);
+  const [selected, setSelected] = useState(() => new Set());
+  const [addEmail, setAddEmail] = useState('');
   const [subscribersState, setSubscribersState] = useState({ status: 'idle', error: '', info: '' });
 
   const [subject, setSubject] = useState('');
@@ -45,6 +47,38 @@ export default function MailBlastPanel({ sessionEmail }) {
 
   const [sendState, setSendState] = useState({ status: 'idle', error: '', info: '' });
   const [progress, setProgress] = useState({ sent: 0, total: 0 });
+
+  function handleAddSubscriber() {
+    const list = parseEmailList(addEmail);
+    if (list.length === 0) {
+      setSubscribersState({ status: 'error', error: 'Enter a valid email address to add.', info: '' });
+      return;
+    }
+
+    setSubscribers((prev) => {
+      const seen = new Set(prev);
+      const merged = [...prev];
+      for (const e of list) {
+        if (seen.has(e)) continue;
+        seen.add(e);
+        merged.push(e);
+      }
+
+      setSelected(new Set(merged));
+      return merged;
+    });
+
+    setAddEmail('');
+    setSubscribersState({ status: 'ready', error: '', info: 'Added. Click “Save list” to persist.' });
+  }
+
+  function handleSelectAll() {
+    setSelected(new Set(subscribers));
+  }
+
+  function handleSelectNone() {
+    setSelected(new Set());
+  }
 
   useEffect(() => {
     // Best-effort: preload saved subscriber list.
@@ -61,7 +95,8 @@ export default function MailBlastPanel({ sessionEmail }) {
       }
 
       const list = Array.isArray(res.data?.subscribers) ? res.data.subscribers : [];
-      setSubscribersText(formatList(list));
+      setSubscribers(list);
+      setSelected(new Set(list));
       setSubscribersState({ status: 'ready', error: '', info: list.length ? `Loaded ${list.length} subscribers.` : 'No subscribers saved yet.' });
     }
 
@@ -75,20 +110,21 @@ export default function MailBlastPanel({ sessionEmail }) {
     e.preventDefault();
     setSubscribersState({ status: 'loading', error: '', info: '' });
 
-    const list = parseEmailList(subscribersText);
-    if (list.length === 0) {
-      setSubscribersState({ status: 'error', error: 'Please enter at least one subscriber email.', info: '' });
+    if (subscribers.length === 0) {
+      setSubscribersState({ status: 'error', error: 'Please add at least one subscriber email.', info: '' });
       return;
     }
 
-    const res = await adminNewsletterSetSubscribers({ subscribers: list });
+    const res = await adminNewsletterSetSubscribers({ subscribers });
     if (!res.ok) {
       setSubscribersState({ status: 'error', error: res.error || 'Failed to save subscribers', info: '' });
       return;
     }
 
-    setSubscribersText(formatList(res.data?.subscribers || list));
-    setSubscribersState({ status: 'ready', error: '', info: `Saved ${list.length} subscribers.` });
+    const saved = Array.isArray(res.data?.subscribers) ? res.data.subscribers : subscribers;
+    setSubscribers(saved);
+    setSelected(new Set(saved));
+    setSubscribersState({ status: 'ready', error: '', info: `Saved ${saved.length} subscribers.` });
   }
 
   async function handleSendTest(e) {
@@ -127,9 +163,15 @@ export default function MailBlastPanel({ sessionEmail }) {
     e.preventDefault();
     setSendState({ status: 'loading', error: '', info: '' });
 
-    const list = parseEmailList(subscribersText);
+    const list = subscribers;
     if (list.length === 0) {
       setSendState({ status: 'error', error: 'No subscribers. Add emails and Save list first.', info: '' });
+      return;
+    }
+
+    const recipients = list.filter((e) => selected.has(e));
+    if (recipients.length === 0) {
+      setSendState({ status: 'error', error: 'No recipients selected.', info: '' });
       return;
     }
 
@@ -148,20 +190,20 @@ export default function MailBlastPanel({ sessionEmail }) {
 
     // Send in small batches so one click remains reliable.
     const batchSize = 50;
-    setProgress({ sent: 0, total: list.length });
+    setProgress({ sent: 0, total: recipients.length });
 
-    for (let i = 0; i < list.length; i += batchSize) {
-      const batch = list.slice(i, i + batchSize);
+    for (let i = 0; i < recipients.length; i += batchSize) {
+      const batch = recipients.slice(i, i + batchSize);
       const res = await adminNewsletterSend({ subject: cleanSubject, message: cleanMessage, recipients: batch });
       if (!res.ok) {
         setSendState({ status: 'error', error: res.error || 'Failed while sending', info: '' });
         return;
       }
 
-      setProgress((p) => ({ sent: Math.min(list.length, p.sent + batch.length), total: p.total }));
+      setProgress((p) => ({ sent: Math.min(recipients.length, p.sent + batch.length), total: p.total }));
     }
 
-    setSendState({ status: 'ready', error: '', info: `Sent to ${list.length} recipients.` });
+    setSendState({ status: 'ready', error: '', info: `Sent to ${recipients.length} recipients.` });
   }
 
   return (
@@ -181,20 +223,99 @@ export default function MailBlastPanel({ sessionEmail }) {
       </p>
 
       <form onSubmit={handleSaveSubscribers} className="bbm-contact-form" style={{ marginTop: 10 }}>
-        <h4 className="bbm-contact-subtitle" style={{ marginBottom: 0, fontSize: '1.1rem' }}>
-          Subscribers
-        </h4>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <h4 className="bbm-contact-subtitle" style={{ marginBottom: 0, fontSize: '1.1rem' }}>
+            Subscribers
+          </h4>
 
-        <label className="bbm-form-label">
-          Email list (one per line)
-          <textarea
-            className="bbm-form-textarea"
-            rows={8}
-            value={subscribersText}
-            onChange={(e) => setSubscribersText(e.target.value)}
-            placeholder={'person1@gmail.com\nperson2@gmail.com'}
-          />
-        </label>
+          <div style={{ display: 'inline-flex', gap: 10, alignItems: 'center' }}>
+            <button
+              className="bbm-form-submit"
+              type="button"
+              onClick={handleSelectAll}
+              style={{ marginTop: 0, width: 'fit-content' }}
+              disabled={subscribersState.status === 'loading' || subscribers.length === 0}
+            >
+              Select all
+            </button>
+            <button
+              className="bbm-form-submit"
+              type="button"
+              onClick={handleSelectNone}
+              style={{ marginTop: 0, width: 'fit-content' }}
+              disabled={subscribersState.status === 'loading' || subscribers.length === 0}
+            >
+              Select none
+            </button>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, alignItems: 'end' }}>
+          <label className="bbm-form-label" style={{ margin: 0 }}>
+            Add address
+            <input
+              className="bbm-form-input"
+              value={addEmail}
+              onChange={(e) => setAddEmail(e.target.value)}
+              placeholder="person@example.com"
+              disabled={subscribersState.status === 'loading'}
+            />
+          </label>
+
+          <button
+            className="bbm-form-submit"
+            type="button"
+            onClick={handleAddSubscriber}
+            style={{ marginTop: 0, width: 'fit-content', alignSelf: 'end' }}
+            disabled={subscribersState.status === 'loading'}
+          >
+            Add
+          </button>
+        </div>
+
+        <div
+          style={{
+            marginTop: 10,
+            border: '1px solid rgba(247, 200, 115, 0.22)',
+            borderRadius: 10,
+            padding: 10,
+            maxHeight: 240,
+            overflow: 'auto',
+          }}
+        >
+          {subscribers.length === 0 ? (
+            <div style={{ opacity: 0.85, fontSize: 14 }}>No subscribers yet.</div>
+          ) : (
+            subscribers.map((email) => (
+              <label
+                key={email}
+                className="bbm-form-label"
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                  margin: 0,
+                  padding: '6px 4px',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={selected.has(email)}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setSelected((prev) => {
+                      const next = new Set(prev);
+                      if (checked) next.add(email);
+                      else next.delete(email);
+                      return next;
+                    });
+                  }}
+                />
+                <span style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace', fontSize: 13 }}>{email}</span>
+              </label>
+            ))
+          )}
+        </div>
 
         {subscribersState.error ? <div className="bbm-form-error">{subscribersState.error}</div> : null}
         {subscribersState.info ? <div className="bbm-form-success">{subscribersState.info}</div> : null}
@@ -207,7 +328,9 @@ export default function MailBlastPanel({ sessionEmail }) {
             className="bbm-form-submit"
             type="button"
             onClick={() => {
-              setSubscribersText('');
+              setSubscribers([]);
+              setSelected(new Set());
+              setAddEmail('');
               setSubscribersState({ status: 'idle', error: '', info: '' });
             }}
             style={{ marginTop: 0 }}
@@ -250,22 +373,27 @@ export default function MailBlastPanel({ sessionEmail }) {
               placeholder="you@gmail.com"
             />
           </label>
-          <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: 10, alignSelf: 'end' }}>
             <button
               className="bbm-form-submit"
               type="button"
               onClick={handleSendTest}
               disabled={sendState.status === 'loading'}
-              style={{ marginTop: 0, width: '100%' }}
+              style={{ marginTop: 0, width: 'fit-content' }}
             >
               {sendState.status === 'loading' ? 'Sending…' : 'Send test'}
             </button>
+
+            <button
+              className="bbm-form-submit"
+              type="submit"
+              disabled={sendState.status === 'loading'}
+              style={{ marginTop: 0, width: 'fit-content' }}
+            >
+              {sendState.status === 'loading' ? 'Sending…' : 'Send to subscribers'}
+            </button>
           </div>
         </div>
-
-        <button className="bbm-form-submit" type="submit" disabled={sendState.status === 'loading'}>
-          {sendState.status === 'loading' ? 'Sending…' : 'Send to subscribers'}
-        </button>
 
         {progress.total > 0 && sendState.status === 'loading' ? (
           <div className="bbm-form-success" style={{ marginTop: 10 }}>

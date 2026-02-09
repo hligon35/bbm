@@ -34,8 +34,71 @@ function defaultAvailability() {
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+function availabilitySignature(value) {
+  try {
+    return JSON.stringify(value || null);
+  } catch {
+    return '';
+  }
+}
+
 export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEmail = null, onUnauthorized, onLoggedOut }) {
   const navigate = useNavigate();
+
+  const TIMEZONE_OPTIONS = [
+    'America/Chicago',
+    'America/New_York',
+    'America/Denver',
+    'America/Los_Angeles',
+    'America/Phoenix',
+    'America/Anchorage',
+    'Pacific/Honolulu',
+    'UTC',
+  ];
+
+  const SLOT_DURATION_OPTIONS = Array.from({ length: 12 }, (_, i) => (i + 1) * 15); // 15..180 by 15
+  const DAYS_AHEAD_OPTIONS = Array.from({ length: 60 }, (_, i) => i + 1); // 1..60
+  const START_DAYS_OPTIONS = Array.from({ length: 15 }, (_, i) => i); // 0..14
+
+  const HOUR_OPTIONS = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')); // 01..12
+  const MINUTE_OPTIONS = ['00', '15', '30', '45'];
+  const MERIDIEM_OPTIONS = ['AM', 'PM'];
+
+  function splitHHMM(value, fallback = { hh: '09', mm: '00', ampm: 'AM' }) {
+    const v = String(value || '').trim();
+    const m = v.match(/^(\d{1,2}):(\d{2})$/);
+    if (!m) return fallback;
+
+    const hh24 = Number(m[1]);
+    const mm = String(m[2]).padStart(2, '0');
+    if (!Number.isFinite(hh24) || hh24 < 0 || hh24 > 23) return fallback;
+    if (!MINUTE_OPTIONS.includes(mm)) return fallback;
+
+    const ampm = hh24 >= 12 ? 'PM' : 'AM';
+    const hh12n = hh24 % 12 === 0 ? 12 : hh24 % 12;
+    const hh = String(hh12n).padStart(2, '0');
+    if (!HOUR_OPTIONS.includes(hh)) return fallback;
+    if (!MERIDIEM_OPTIONS.includes(ampm)) return fallback;
+
+    return { hh, mm, ampm };
+  }
+
+  function toHHMM(hh, mm, ampm) {
+    const cleanHh = String(hh).padStart(2, '0');
+    const cleanMm = String(mm).padStart(2, '0');
+    const cleanAmPm = String(ampm || 'AM').toUpperCase();
+
+    if (!HOUR_OPTIONS.includes(cleanHh)) return '09:00';
+    if (!MINUTE_OPTIONS.includes(cleanMm)) return '09:00';
+    if (!MERIDIEM_OPTIONS.includes(cleanAmPm)) return '09:00';
+
+    const h12 = Number(cleanHh);
+    const base = h12 % 12;
+    const h24 = cleanAmPm === 'PM' ? base + 12 : base;
+    const H = String(h24).padStart(2, '0');
+    return `${H}:${cleanMm}`;
+  }
+
   const [sessionState, setSessionState] = useState({
     status: skipSessionCheck ? 'ready' : 'loading',
     email: sessionEmail,
@@ -46,7 +109,14 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
   const [availabilityState, setAvailabilityState] = useState({ status: 'idle', data: null, error: null });
   const [availabilityDraft, setAvailabilityDraft] = useState(defaultAvailability());
 
+  const isAvailabilitySaved = useMemo(() => {
+    if (availabilityState.status !== 'ready') return false;
+    if (!availabilityState.data) return false;
+    return availabilitySignature(availabilityDraft) === availabilitySignature(availabilityState.data);
+  }, [availabilityDraft, availabilityState.data, availabilityState.status]);
+
   const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteName, setInviteName] = useState('');
   const [inviteDays, setInviteDays] = useState('7');
   const [inviteState, setInviteState] = useState({ status: 'idle', data: null, error: null });
 
@@ -143,8 +213,18 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
     e.preventDefault();
     if (sessionState.status !== 'ready') return;
 
+    const cleanName = String(inviteName || '').trim();
+    if (!cleanName) {
+      setInviteState({ status: 'error', data: null, error: 'Guest name is required.' });
+      return;
+    }
+    if (cleanName.length > 80) {
+      setInviteState({ status: 'error', data: null, error: 'Guest name too long (max 80).' });
+      return;
+    }
+
     setInviteState({ status: 'loading', data: null, error: null });
-    const res = await adminCreateInvite({ email: inviteEmail, days: inviteDays });
+    const res = await adminCreateInvite({ email: inviteEmail, days: inviteDays, name: cleanName });
 
     if (!res.ok) {
       setInviteState({ status: 'error', data: null, error: res.error || 'Failed to generate link' });
@@ -180,24 +260,36 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
                   {availabilityState.status === 'loading' && <p className="bbm-contact-text" style={{ textAlign: 'center' }}>Loading…</p>}
                   {availabilityState.status === 'error' && <div className="bbm-form-error">{availabilityState.error}</div>}
 
-                  <label className="bbm-form-label">
-                    Timezone
-                    <input
-                      className="bbm-form-input"
-                      value={availabilityDraft.timezone}
-                      onChange={(e) => setAvailabilityDraft((d) => ({ ...d, timezone: e.target.value }))}
-                      placeholder="America/Chicago"
-                    />
-                  </label>
-
-                  <div className="bbm-form-row">
-                    <label className="bbm-form-label">
-                      Slot duration (minutes)
-                      <input
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                      gap: 10,
+                      alignItems: 'end',
+                    }}
+                  >
+                    <label className="bbm-form-label" style={{ margin: 0 }}>
+                      Timezone
+                      <select
                         className="bbm-form-input"
-                        type="number"
-                        min={10}
-                        max={180}
+                        value={availabilityDraft.timezone}
+                        onChange={(e) => setAvailabilityDraft((d) => ({ ...d, timezone: e.target.value }))}
+                      >
+                        {(TIMEZONE_OPTIONS.includes(availabilityDraft.timezone)
+                          ? TIMEZONE_OPTIONS
+                          : [availabilityDraft.timezone, ...TIMEZONE_OPTIONS]
+                        ).map((tz) => (
+                          <option key={tz} value={tz}>
+                            {tz}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="bbm-form-label" style={{ margin: 0 }}>
+                      Time slot
+                      <select
+                        className="bbm-form-input"
                         value={availabilityDraft.slotDurationMinutes}
                         onChange={(e) =>
                           setAvailabilityDraft((d) => ({
@@ -205,38 +297,59 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
                             slotDurationMinutes: Number(e.target.value),
                           }))
                         }
-                      />
+                      >
+                        {(SLOT_DURATION_OPTIONS.includes(availabilityDraft.slotDurationMinutes)
+                          ? SLOT_DURATION_OPTIONS
+                          : [availabilityDraft.slotDurationMinutes, ...SLOT_DURATION_OPTIONS]
+                        ).map((m) => (
+                          <option key={m} value={m}>
+                            {m} min
+                          </option>
+                        ))}
+                      </select>
                     </label>
 
-                    <label className="bbm-form-label">
+                    <label className="bbm-form-label" style={{ margin: 0 }}>
                       Days ahead
-                      <input
+                      <select
                         className="bbm-form-input"
-                        type="number"
-                        min={1}
-                        max={60}
                         value={availabilityDraft.daysAhead}
                         onChange={(e) => setAvailabilityDraft((d) => ({ ...d, daysAhead: Number(e.target.value) }))}
-                      />
+                      >
+                        {(DAYS_AHEAD_OPTIONS.includes(availabilityDraft.daysAhead)
+                          ? DAYS_AHEAD_OPTIONS
+                          : [availabilityDraft.daysAhead, ...DAYS_AHEAD_OPTIONS]
+                        ).map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="bbm-form-label" style={{ margin: 0 }}>
+                      Start days
+                      <select
+                        className="bbm-form-input"
+                        value={availabilityDraft.startDaysFromNow}
+                        onChange={(e) =>
+                          setAvailabilityDraft((d) => ({
+                            ...d,
+                            startDaysFromNow: Number(e.target.value),
+                          }))
+                        }
+                      >
+                        {(START_DAYS_OPTIONS.includes(availabilityDraft.startDaysFromNow)
+                          ? START_DAYS_OPTIONS
+                          : [availabilityDraft.startDaysFromNow, ...START_DAYS_OPTIONS]
+                        ).map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                      </select>
                     </label>
                   </div>
-
-                  <label className="bbm-form-label">
-                    Start days from now
-                    <input
-                      className="bbm-form-input"
-                      type="number"
-                      min={0}
-                      max={14}
-                      value={availabilityDraft.startDaysFromNow}
-                      onChange={(e) =>
-                        setAvailabilityDraft((d) => ({
-                          ...d,
-                          startDaysFromNow: Number(e.target.value),
-                        }))
-                      }
-                    />
-                  </label>
 
                   <div>
                     <div className="bbm-contact-subtitle" style={{ marginTop: 8 }}>Weekly hours</div>
@@ -246,7 +359,7 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
                           key={idx}
                           style={{
                             display: 'grid',
-                            gridTemplateColumns: '130px 1fr 1fr',
+                            gridTemplateColumns: '130px auto auto',
                             gap: 10,
                             alignItems: 'center',
                           }}
@@ -265,31 +378,145 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
                             <span>{DAY_LABELS[idx]}</span>
                           </label>
 
-                          <input
-                            className="bbm-form-input"
-                            type="time"
-                            value={day.start}
-                            disabled={!day.enabled}
-                            onChange={(e) =>
-                              setAvailabilityDraft((d) => ({
-                                ...d,
-                                days: d.days.map((x, i) => (i === idx ? { ...x, start: e.target.value } : x)),
-                              }))
-                            }
-                          />
+                          {(() => {
+                            const startParts = splitHHMM(day.start, { hh: '09', mm: '00', ampm: 'AM' });
+                            return (
+                              <div style={{ display: 'inline-flex', gap: 8, alignItems: 'center', justifyContent: 'flex-start' }}>
+                                <select
+                                  className="bbm-form-input"
+                                  value={startParts.hh}
+                                  disabled={!day.enabled}
+                                  onChange={(e) =>
+                                    setAvailabilityDraft((d) => ({
+                                      ...d,
+                                      days: d.days.map((x, i) =>
+                                        i === idx ? { ...x, start: toHHMM(e.target.value, startParts.mm, startParts.ampm) } : x
+                                      ),
+                                    }))
+                                  }
+                                  style={{ width: 'fit-content' }}
+                                >
+                                  {HOUR_OPTIONS.map((hh) => (
+                                    <option key={hh} value={hh}>
+                                      {hh}
+                                    </option>
+                                  ))}
+                                </select>
+                                <span style={{ opacity: 0.85 }}>:</span>
+                                <select
+                                  className="bbm-form-input"
+                                  value={startParts.mm}
+                                  disabled={!day.enabled}
+                                  onChange={(e) =>
+                                    setAvailabilityDraft((d) => ({
+                                      ...d,
+                                      days: d.days.map((x, i) =>
+                                        i === idx ? { ...x, start: toHHMM(startParts.hh, e.target.value, startParts.ampm) } : x
+                                      ),
+                                    }))
+                                  }
+                                  style={{ width: 'fit-content' }}
+                                >
+                                  {MINUTE_OPTIONS.map((mm) => (
+                                    <option key={mm} value={mm}>
+                                      {mm}
+                                    </option>
+                                  ))}
+                                </select>
 
-                          <input
-                            className="bbm-form-input"
-                            type="time"
-                            value={day.end}
-                            disabled={!day.enabled}
-                            onChange={(e) =>
-                              setAvailabilityDraft((d) => ({
-                                ...d,
-                                days: d.days.map((x, i) => (i === idx ? { ...x, end: e.target.value } : x)),
-                              }))
-                            }
-                          />
+                                <select
+                                  className="bbm-form-input"
+                                  value={startParts.ampm}
+                                  disabled={!day.enabled}
+                                  onChange={(e) =>
+                                    setAvailabilityDraft((d) => ({
+                                      ...d,
+                                      days: d.days.map((x, i) =>
+                                        i === idx ? { ...x, start: toHHMM(startParts.hh, startParts.mm, e.target.value) } : x
+                                      ),
+                                    }))
+                                  }
+                                  style={{ width: 'fit-content' }}
+                                >
+                                  {MERIDIEM_OPTIONS.map((m) => (
+                                    <option key={m} value={m}>
+                                      {m}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            );
+                          })()}
+
+                          {(() => {
+                            const endParts = splitHHMM(day.end, { hh: '05', mm: '00', ampm: 'PM' });
+                            return (
+                              <div style={{ display: 'inline-flex', gap: 8, alignItems: 'center', justifyContent: 'flex-start' }}>
+                                <select
+                                  className="bbm-form-input"
+                                  value={endParts.hh}
+                                  disabled={!day.enabled}
+                                  onChange={(e) =>
+                                    setAvailabilityDraft((d) => ({
+                                      ...d,
+                                      days: d.days.map((x, i) =>
+                                        i === idx ? { ...x, end: toHHMM(e.target.value, endParts.mm, endParts.ampm) } : x
+                                      ),
+                                    }))
+                                  }
+                                  style={{ width: 'fit-content' }}
+                                >
+                                  {HOUR_OPTIONS.map((hh) => (
+                                    <option key={hh} value={hh}>
+                                      {hh}
+                                    </option>
+                                  ))}
+                                </select>
+                                <span style={{ opacity: 0.85 }}>:</span>
+                                <select
+                                  className="bbm-form-input"
+                                  value={endParts.mm}
+                                  disabled={!day.enabled}
+                                  onChange={(e) =>
+                                    setAvailabilityDraft((d) => ({
+                                      ...d,
+                                      days: d.days.map((x, i) =>
+                                        i === idx ? { ...x, end: toHHMM(endParts.hh, e.target.value, endParts.ampm) } : x
+                                      ),
+                                    }))
+                                  }
+                                  style={{ width: 'fit-content' }}
+                                >
+                                  {MINUTE_OPTIONS.map((mm) => (
+                                    <option key={mm} value={mm}>
+                                      {mm}
+                                    </option>
+                                  ))}
+                                </select>
+
+                                <select
+                                  className="bbm-form-input"
+                                  value={endParts.ampm}
+                                  disabled={!day.enabled}
+                                  onChange={(e) =>
+                                    setAvailabilityDraft((d) => ({
+                                      ...d,
+                                      days: d.days.map((x, i) =>
+                                        i === idx ? { ...x, end: toHHMM(endParts.hh, endParts.mm, e.target.value) } : x
+                                      ),
+                                    }))
+                                  }
+                                  style={{ width: 'fit-content' }}
+                                >
+                                  {MERIDIEM_OPTIONS.map((m) => (
+                                    <option key={m} value={m}>
+                                      {m}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            );
+                          })()}
                         </div>
                       ))}
                     </div>
@@ -298,8 +525,12 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
                     </p>
                   </div>
 
-                  <button className="bbm-form-submit" type="submit" disabled={availabilityState.status === 'saving'}>
-                    {availabilityState.status === 'saving' ? 'Saving…' : 'Save availability'}
+                  <button
+                    className="bbm-form-submit"
+                    type="submit"
+                    disabled={availabilityState.status === 'saving' || isAvailabilitySaved}
+                  >
+                    {availabilityState.status === 'saving' ? 'Saving…' : isAvailabilitySaved ? 'Saved' : 'Save availability'}
                   </button>
                 </form>
 
@@ -308,7 +539,18 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
                 <form onSubmit={handleCreateInvite} className="bbm-contact-form">
                   <h3 className="bbm-contact-subtitle" style={{ textAlign: 'center' }}>Guest invite link</h3>
 
-                  <div className="bbm-form-row">
+                  <div className="bbm-form-row bbm-form-row-3">
+                    <label className="bbm-form-label">
+                      Guest name
+                      <input
+                        className="bbm-form-input"
+                        value={inviteName}
+                        onChange={(e) => setInviteName(e.target.value)}
+                        placeholder="Guest name"
+                        required
+                      />
+                    </label>
+
                     <label className="bbm-form-label">
                       Guest email
                       <input
@@ -316,6 +558,7 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
                         value={inviteEmail}
                         onChange={(e) => setInviteEmail(e.target.value)}
                         placeholder="guest@example.com"
+                        required
                       />
                     </label>
 
@@ -328,6 +571,7 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
                         max={365}
                         value={inviteDays}
                         onChange={(e) => setInviteDays(e.target.value)}
+                        required
                       />
                     </label>
                   </div>
@@ -350,7 +594,9 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
                         />
                       </label>
                       <div className="bbm-form-success" style={{ marginTop: 10 }}>
-                        Expires: {new Date(inviteState.data.expiresAt).toLocaleString()}
+                        Link emailed to: <b>{inviteEmail}</b>
+                        <br />
+                        Expires: {new Date(inviteState.data.expiresAt).toLocaleDateString()}
                       </div>
                     </div>
                   )}

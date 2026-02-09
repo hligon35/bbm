@@ -171,11 +171,14 @@ export default function AdminLoginPage({ onSuccess }) {
               Code
               <input
                 className="bbm-form-input"
+                type="text"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="123456"
                 inputMode="numeric"
                 autoComplete="one-time-code"
+                autoFocus
+                required
               />
             </label>
           )}

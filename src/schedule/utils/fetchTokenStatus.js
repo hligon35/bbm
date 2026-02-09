@@ -19,7 +19,15 @@ export async function fetchTokenStatus(token) {
     });
 
     if (!res.ok) {
-      return { ok: false, status: res.status, error: 'Invalid or expired link' };
+      const payloadText = await res.text();
+      let payload;
+      try {
+        payload = payloadText ? JSON.parse(payloadText) : null;
+      } catch {
+        payload = null;
+      }
+
+      return { ok: false, status: res.status, error: payload?.error || 'Invalid or expired link' };
     }
 
     const data = await res.json();

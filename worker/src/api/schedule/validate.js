@@ -9,10 +9,22 @@ function jsonResponse(body, { status = 200, headers = {} } = {}) {
 }
 
 function normalizeExpiresAt(expiresAt) {
-  if (typeof expiresAt === 'number') return expiresAt;
+  if (typeof expiresAt === 'number') {
+    // Support both milliseconds (Date.now()) and legacy seconds.
+    // Milliseconds are currently ~1.7e12; seconds are ~1.7e9.
+    if (Number.isFinite(expiresAt) && expiresAt > 0 && expiresAt < 1_000_000_000_000) {
+      return expiresAt * 1000;
+    }
+    return expiresAt;
+  }
   if (typeof expiresAt === 'string') {
     const asNumber = Number(expiresAt);
-    if (Number.isFinite(asNumber)) return asNumber;
+    if (Number.isFinite(asNumber)) {
+      if (asNumber > 0 && asNumber < 1_000_000_000_000) {
+        return asNumber * 1000;
+      }
+      return asNumber;
+    }
     const asDate = Date.parse(expiresAt);
     if (Number.isFinite(asDate)) return asDate;
   }
@@ -61,7 +73,7 @@ async function readTokenFromKv(env, token) {
 export async function validateScheduleToken(env, token) {
   const trimmed = String(token || '').trim();
   if (!trimmed) {
-    return { ok: false, status: 401, error: 'Missing token' };
+    return { ok: false, status: 401, error: 'Missing token', reason: 'MISSING_TOKEN' };
   }
 
   // Local/dev convenience: allow viewing the scheduling UI without KV.
@@ -76,6 +88,7 @@ export async function validateScheduleToken(env, token) {
         status: 200,
         data: {
           token: trimmed,
+          name: 'Demo Guest',
           email: 'demo@example.com',
           expiresAt,
         },
@@ -94,6 +107,7 @@ export async function validateScheduleToken(env, token) {
         ok: false,
         status: 501,
         error: 'Schedule token storage not configured',
+        reason: 'KV_NOT_CONFIGURED',
       };
     }
     if (read.reason === 'KV_READ_ERROR') {
@@ -101,9 +115,10 @@ export async function validateScheduleToken(env, token) {
         ok: false,
         status: 500,
         error: 'Schedule token storage read error',
+        reason: 'KV_READ_ERROR',
       };
     }
-    return { ok: false, status: 401, error: 'Invalid or expired token' };
+    return { ok: false, status: 401, error: 'Invalid or expired token', reason: 'NOT_FOUND' };
   }
 
   const entry = read.value || {};
@@ -113,11 +128,11 @@ export async function validateScheduleToken(env, token) {
   const now = Date.now();
 
   if (used) {
-    return { ok: false, status: 401, error: 'Token already used' };
+    return { ok: false, status: 401, error: 'Token already used', reason: 'USED' };
   }
 
   if (!expiresAtMs || expiresAtMs <= now) {
-    return { ok: false, status: 401, error: 'Token expired' };
+    return { ok: false, status: 401, error: 'Token expired', reason: 'EXPIRED' };
   }
 
   // Minimal metadata returned to frontend.
@@ -126,6 +141,7 @@ export async function validateScheduleToken(env, token) {
     status: 200,
     data: {
       token: trimmed,
+      name: String(entry.name || ''),
       email: String(entry.email || ''),
       expiresAt: expiresAtMs,
     },
@@ -147,7 +163,10 @@ export async function handleValidate(request, env, corsHeaders) {
   const result = await validateScheduleToken(env, body?.token);
 
   if (!result.ok) {
-    return jsonResponse({ ok: false, error: result.error }, { status: result.status, headers: corsHeaders });
+    return jsonResponse(
+      { ok: false, error: result.error, reason: result.reason || null },
+      { status: result.status, headers: corsHeaders }
+    );
   }
 
   return jsonResponse(result.data, { status: 200, headers: corsHeaders });

@@ -56,11 +56,26 @@ export function computeAvailableSlots({ now = new Date(), durationMinutes = 30 }
 
       const startUtc = new Date(startIso);
 
+      const dayLabel = startUtc.toLocaleDateString('en-US', {
+        timeZone: tz,
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+      });
+
+      const timeLabel = startUtc.toLocaleTimeString('en-US', {
+        timeZone: tz,
+        hour: 'numeric',
+        minute: '2-digit',
+      });
+
       slots.push({
         id: startIso,
         start: startIso,
         end: endIso,
         durationMinutes: safeSlotMinutes,
+        dayLabel,
+        timeLabel,
         label: startUtc.toLocaleString('en-US', {
           timeZone: tz,
           weekday: 'short',

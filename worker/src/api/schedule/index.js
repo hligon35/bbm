@@ -3,6 +3,7 @@ import { handleBook } from './book';
 import { handleSlots } from './slots';
 import { handleAdmin } from './admin';
 import { handleAdminAuth } from './auth';
+import { handleNewsletterSubscribe } from './newsletter';
 
 function jsonResponse(body, { status = 200, headers = {} } = {}) {
   return new Response(JSON.stringify(body), {
@@ -90,6 +91,10 @@ export async function handleScheduleRequest(request, env) {
   // Basic origin enforcement when ALLOWED_ORIGINS is not '*'
   if (!allowedOrigins.includes('*') && origin && !allowedOrigins.includes(origin) && !(devMode && isLocalhostOrigin(origin))) {
     return jsonResponse({ ok: false, error: 'Origin not allowed' }, { status: 403, headers: cors });
+  }
+
+  if (url.pathname === '/api/schedule/newsletter/subscribe') {
+    return handleNewsletterSubscribe(request, env, cors);
   }
 
   if (url.pathname.startsWith('/api/schedule/admin/')) {

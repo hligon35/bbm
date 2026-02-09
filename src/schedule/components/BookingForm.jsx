@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 /**
  * Booking form component.
@@ -7,10 +7,16 @@ import React, { useMemo, useState } from 'react';
  * - Email is prefilled from token metadata when available.
  * - Server will still validate the token and can enforce email matching later.
  */
-export default function BookingForm({ disabled, defaultEmail, onSubmit, error }) {
-  const [name, setName] = useState('');
+export default function BookingForm({ disabled, defaultEmail, defaultName, onSubmit, error }) {
+  const [name, setName] = useState(defaultName || '');
   const [email, setEmail] = useState(defaultEmail || '');
   const [notes, setNotes] = useState('');
+
+  useEffect(() => {
+    if (!name && defaultName) {
+      setName(defaultName);
+    }
+  }, [defaultName, name]);
 
   const canSubmit = useMemo(() => {
     if (disabled) return false;

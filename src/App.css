@@ -213,7 +213,7 @@
   box-shadow: 0 2px 8px 0 rgba(0,0,0,0.10);
 }
 .bbm-navbar-logo-text {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 800;
   color: var(--bbm-accent, #f7c873);
   letter-spacing: 2px;
@@ -681,6 +681,9 @@ html, body, .bbm-root {
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
+.bbm-form-row.bbm-form-row-3 {
+  grid-template-columns: 1fr 1fr 0.75fr;
+}
 .bbm-form-label {
   display: flex;
   flex-direction: column;
@@ -710,6 +713,13 @@ html, body, .bbm-root {
 }
 .bbm-form-submit {
   margin-top: 0.5rem;
+  width: fit-content;
+  max-width: 100%;
+  justify-self: start;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0.85rem 1.2rem;
   border-radius: 999px;
   border: 2px solid var(--bbm-accent);
@@ -761,6 +771,9 @@ html, body, .bbm-root {
   .bbm-form-row {
     grid-template-columns: 1fr;
   }
+  .bbm-form-row.bbm-form-row-3 {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Footer */
@@ -790,15 +803,15 @@ html, body, .bbm-root {
   font-weight: 800;
   color: var(--bbm-accent, #f7c873);
   letter-spacing: 2px;
-  font-size: 1.6rem;
-  line-height: 1.1;
+  font-size: 2.5rem;
+  line-height: 1.5;
   margin-bottom: 0.5rem;
 }
 .bbm-footer-title-text.bbm-footer-title-stack span {
   color: var(--bbm-accent, #f7c873);
-  font-size: 1.3em;
+  font-size: 1.25em;
   font-weight: 800;
-  line-height: 1.1;
+  line-height: 1.5;
 }
 .bbm-footer-contact {
   flex: 1 1 300px;

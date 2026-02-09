@@ -26,6 +26,7 @@ export default function ScheduleInvitePage() {
   const [bookingState, setBookingState] = useState({ status: 'idle', result: null, error: null });
 
   const inviteEmail = useMemo(() => tokenState.data?.email || '', [tokenState.data]);
+  const inviteName = useMemo(() => tokenState.data?.name || '', [tokenState.data]);
 
   useEffect(() => {
     let cancelled = false;
@@ -104,7 +105,7 @@ export default function ScheduleInvitePage() {
     return (
       <div style={{ maxWidth: 780, margin: '40px auto', padding: '0 16px' }}>
         <h1>Scheduling</h1>
-        <p>Invalid or expired link.</p>
+        <p>{tokenState.error || 'Invalid or expired link.'}</p>
       </div>
     );
   }
@@ -133,6 +134,7 @@ export default function ScheduleInvitePage() {
         <BookingForm
           disabled={!selectedSlot || bookingState.status === 'submitting'}
           defaultEmail={inviteEmail}
+          defaultName={inviteName}
           onSubmit={handleBook}
           error={bookingState.status === 'error' ? bookingState.error : null}
         />

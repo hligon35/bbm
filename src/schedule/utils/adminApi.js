@@ -41,12 +41,20 @@ function apiUrl(path) {
 }
 
 async function postJson(path, body) {
-  const res = await fetch(apiUrl(path), {
-    method: 'POST',
-    headers: jsonHeaders(),
-    credentials: 'include',
-    body: JSON.stringify(body || {}),
-  });
+  let res;
+  try {
+    res = await fetch(apiUrl(path), {
+      method: 'POST',
+      headers: jsonHeaders(),
+      credentials: 'include',
+      body: JSON.stringify(body || {}),
+    });
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : 'Network error',
+    };
+  }
 
   let data;
   try {
@@ -70,8 +78,8 @@ export async function adminSetAvailability({ availability }) {
   return postJson('/api/schedule/admin/availability/set', { availability });
 }
 
-export async function adminCreateInvite({ email, days }) {
-  return postJson('/api/schedule/admin/invite', { email, days });
+export async function adminCreateInvite({ email, days, name }) {
+  return postJson('/api/schedule/admin/invite', { email, days, name });
 }
 
 export async function adminAuthStart({ email }) {

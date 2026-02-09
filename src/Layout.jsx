@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import './App.css';
 
@@ -13,6 +13,57 @@ export default function Layout({ children }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const handleMenuToggle = () => setMenuOpen((open) => !open);
   const handleMenuClose = () => setMenuOpen(false);
+
+  const newsletterEndpoint = useMemo(() => {
+    return import.meta.env.VITE_NEWSLETTER_SUBSCRIBE_ENDPOINT || '/api/schedule/newsletter/subscribe';
+  }, []);
+
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterFirstName, setNewsletterFirstName] = useState('');
+  const [newsletterLastName, setNewsletterLastName] = useState('');
+  const [newsletterState, setNewsletterState] = useState({ status: 'idle', error: '', info: '' });
+
+  async function handleNewsletterSubmit(e) {
+    e.preventDefault();
+    setNewsletterState({ status: 'idle', error: '', info: '' });
+
+    const clean = newsletterEmail.trim();
+    if (!clean || clean.length > 120 || !clean.includes('@')) {
+      setNewsletterState({ status: 'idle', error: 'Please enter a valid email.', info: '' });
+      return;
+    }
+
+    setNewsletterState({ status: 'loading', error: '', info: '' });
+    try {
+      const firstName = newsletterFirstName.trim();
+      const lastName = newsletterLastName.trim();
+      if (firstName.length > 60) throw new Error('First name is too long.');
+      if (lastName.length > 60) throw new Error('Last name is too long.');
+
+      const res = await fetch(newsletterEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: clean, firstName, lastName }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || `Request failed (${res.status}).`);
+      }
+
+      setNewsletterEmail('');
+      setNewsletterFirstName('');
+      setNewsletterLastName('');
+      setNewsletterState({ status: 'success', error: '', info: 'Subscribed. Thank you!' });
+    } catch (err) {
+      setNewsletterState({
+        status: 'idle',
+        error: err instanceof Error ? err.message : 'Failed to subscribe.',
+        info: '',
+      });
+    }
+  }
+
   return (
     <div className="bbm-root">
       <nav className="bbm-navbar">
@@ -51,6 +102,67 @@ export default function Layout({ children }) {
             <span>Mindset</span>
           </div>
           <div className="bbm-footer-contact">
+            <form onSubmit={handleNewsletterSubmit} className="bbm-contact-form" style={{ marginTop: 0 }}>
+              <div style={{ display: 'grid', gap: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'end' }}>
+                  <label className="bbm-form-label" style={{ margin: 0 }}>
+                    First name
+                    <input
+                      className="bbm-form-input"
+                      value={newsletterFirstName}
+                      onChange={(e) => setNewsletterFirstName(e.target.value)}
+                      placeholder="First"
+                      autoComplete="given-name"
+                      disabled={newsletterState.status === 'loading'}
+                    />
+                  </label>
+
+                  <label className="bbm-form-label" style={{ margin: 0 }}>
+                    Last name
+                    <input
+                      className="bbm-form-input"
+                      value={newsletterLastName}
+                      onChange={(e) => setNewsletterLastName(e.target.value)}
+                      placeholder="Last"
+                      autoComplete="family-name"
+                      disabled={newsletterState.status === 'loading'}
+                    />
+                  </label>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '1rem', alignItems: 'end' }}>
+                  <label className="bbm-form-label" style={{ margin: 0 }}>
+                    Subscribe
+                    <input
+                      className="bbm-form-input"
+                      type="email"
+                      value={newsletterEmail}
+                      onChange={(e) => setNewsletterEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      autoComplete="email"
+                      inputMode="email"
+                      autoCapitalize="none"
+                      spellCheck={false}
+                      required
+                      disabled={newsletterState.status === 'loading'}
+                    />
+                  </label>
+
+                  <button
+                    className="bbm-form-submit"
+                    type="submit"
+                    style={{ marginTop: 0, alignSelf: 'end' }}
+                    disabled={newsletterState.status === 'loading'}
+                  >
+                    {newsletterState.status === 'loading' ? 'Subscribing…' : 'Subscribe'}
+                  </button>
+                </div>
+              </div>
+
+              {newsletterState.error ? <div className="bbm-form-error">{newsletterState.error}</div> : null}
+              {newsletterState.info ? <div className="bbm-form-success">{newsletterState.info}</div> : null}
+            </form>
+
             <div className="bbm-footer-socials">
               <a href="http://facebook.com/share/12EqRNzg4YP/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="bbm-social-link">
                 <img src={asset('images/facebook.png')} alt="Facebook" className="bbm-social-img" loading="lazy" decoding="async" />
@@ -69,8 +181,17 @@ export default function Layout({ children }) {
               <span>Want to connect, collaborate, or share your story?</span>
               <a href="mailto:info@blackbridgemindset.com">Email us</a> or follow us on social media.
             </div>
+
             <div className="bbm-footer-copyright">
               &copy; {new Date().getFullYear()} Black Bridge Mindset Podcast. All rights reserved.
+            </div>
+
+            <div className="bbm-footer-copyright">
+              Website designed by {' '}
+              <a href="https://www.hldesignedit.com" target="_blank" rel="noopener noreferrer">
+                HLDesignedIt.com
+              </a>{' '}
+              &copy;
             </div>
           </div>
         </div>

@@ -90,9 +90,8 @@ function buildNewsletterEmail({ subject, message }) {
   const html = `
     <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height: 1.55;">
       <h2 style="margin: 0 0 12px 0;">${escapeHtml(cleanSubject)}</h2>
-      <pre style="margin: 0; white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">${escapeHtml(
-        cleanMessage
-      )}</pre>
+      <div style="margin: 0; white-space: pre-wrap;">${escapeHtml(cleanMessage)}</div>
+      <p style="margin: 16px 0 0 0;">— Mike</p>
     </div>
   `;
 
@@ -177,7 +176,7 @@ function generateToken() {
   return base64UrlEncode(bytes);
 }
 
-async function createInviteToken(env, { email, days }) {
+async function createInviteToken(env, { email, days, name }) {
   if (!env.SCHEDULE_TOKENS) {
     return { ok: false, status: 501, error: 'Schedule token storage not configured' };
   }
@@ -185,6 +184,14 @@ async function createInviteToken(env, { email, days }) {
   const cleanEmail = String(email || '').trim();
   if (!cleanEmail || !cleanEmail.includes('@')) {
     return { ok: false, status: 400, error: 'Invalid email' };
+  }
+
+  const cleanName = String(name || '').trim();
+  if (!cleanName) {
+    return { ok: false, status: 400, error: 'Guest name is required' };
+  }
+  if (cleanName.length > 80) {
+    return { ok: false, status: 400, error: 'Guest name too long (max 80)' };
   }
 
   const daysNumber = Number(days || 7);
@@ -198,12 +205,43 @@ async function createInviteToken(env, { email, days }) {
   const payload = {
     token,
     email: cleanEmail,
+    name: cleanName,
     expiresAt,
     used: false,
   };
 
   await env.SCHEDULE_TOKENS.put(token, JSON.stringify(payload));
   return { ok: true, token, expiresAt };
+}
+
+function buildInviteEmail({ guestName, inviteUrl, expiresAt }) {
+  const name = String(guestName || '').trim();
+  const url = String(inviteUrl || '').trim();
+  const expires = Number(expiresAt);
+
+  const expiresText = Number.isFinite(expires)
+    ? new Date(expires).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    : '';
+  const greeting = name ? `Hi ${name},` : 'Hi,';
+
+  const subject = 'Your Black Bridge Mindset Recording — Choose Your Time';
+
+  const text = `${greeting}\n\nWe here at Black Bridge Mindset Podcast are excited to have you join us on the show. Your story and perspective will bring real value to the community, and we're looking forward to our conversation.\nTo make scheduling easy, we've set aside recording times based on our current availability. Please choose the time that works best for you using the link below:\n\nSchedule your recording:\n${url}\n\nOnce you select a time, you’ll receive a confirmation email. If you have any questions or need a different time, feel free to reply directly. We want this experience to be smooth and enjoyable for you. Looking forward to our conversation.\n\n— Mike${expiresText ? `\n\n(Link expires on ${expiresText})` : ''}`;
+
+  const html = `
+    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height: 1.55;">
+      <p style="margin: 0 0 12px 0;">${escapeHtml(greeting)}</p>
+      <p style="margin: 0 0 12px 0;">We here at Black Bridge Mindset Podcast are excited to have you join us on the show. Your story and perspective will bring real value to the community, and we're looking forward to our conversation.</p>
+      <p style="margin: 0 0 12px 0;">To make scheduling easy, we've set aside recording times based on our current availability. Please choose the time that works best for you using the link below:</p>
+      <p style="margin: 0 0 12px 0; font-weight: 600;">Schedule your recording:</p>
+      <p style="margin: 0 0 12px 0;"><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(url)}</a></p>
+      <p style="margin: 0 0 12px 0;">Once you select a time, you’ll receive a confirmation email. If you have any questions or need a different time, feel free to reply directly. We want this experience to be smooth and enjoyable for you. Looking forward to our conversation.</p>
+      <p style="margin: 0;">— Mike</p>
+      ${expiresText ? `<p style="margin: 8px 0 0 0; opacity: 0.85; font-size: 12px;">(Link expires on ${escapeHtml(expiresText)})</p>` : ''}
+    </div>
+  `;
+
+  return { subject, text, html };
 }
 
 function getRequestHost(request) {
@@ -218,6 +256,28 @@ function parseAllowedHosts(env) {
     .split(',')
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
+}
+
+function parseAllowedOrigins(env) {
+  const raw = String(env.ALLOWED_ORIGINS || '').trim();
+  if (!raw) return [];
+  if (raw === '*') return ['*'];
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function getPublicSiteOrigin(env, fallbackHost) {
+  const explicit = String(env.SCHEDULE_PUBLIC_ORIGIN || '').trim();
+  if (explicit) return explicit.replace(/\/+$/, '');
+
+  const allowed = parseAllowedOrigins(env);
+  const first = allowed.find((o) => o && o !== '*');
+  if (first) return String(first).replace(/\/+$/, '');
+
+  const host = String(fallbackHost || '').trim();
+  return host ? `https://${host}` : '';
 }
 
 async function requireAdminSession(request, env, corsHeaders) {
@@ -258,8 +318,15 @@ function enforceAdminHost(request, env, corsHeaders) {
   return null;
 }
 
-function inviteUrlForHost(host, token) {
-  return `https://${host}/schedule/${token}`;
+function inviteUrlForHost(env, host, token) {
+  // Use a stable, canonical origin so the invite page and /api/schedule/*
+  // endpoints resolve on an allowed origin (avoids www/apex mismatches).
+  if (isDevMode(env)) {
+    return `https://${host}/schedule/${token}`;
+  }
+
+  const origin = getPublicSiteOrigin(env, host);
+  return `${origin}/schedule/${token}`;
 }
 
 export async function handleAdmin(request, env, corsHeaders) {
@@ -291,18 +358,44 @@ export async function handleAdmin(request, env, corsHeaders) {
   }
 
   if (url.pathname === '/api/schedule/admin/invite') {
-    const created = await createInviteToken(env, { email: body?.email, days: body?.days });
+    const created = await createInviteToken(env, { email: body?.email, days: body?.days, name: body?.name });
     if (!created.ok) {
       return jsonResponse({ ok: false, error: created.error }, { status: created.status, headers: corsHeaders });
     }
 
     const host = getRequestHost(request);
+    const inviteUrl = inviteUrlForHost(env, host, created.token);
+
+    const fromEmail = String(env.EMAIL_FROM || '').trim();
+    const fromName = String(env.FROM_NAME || 'Black Bridge Mindset').trim();
+    if (!fromEmail) return jsonResponse({ ok: false, error: 'Email service not configured' }, { status: 500, headers: corsHeaders });
+
+    const guestEmail = normalizeEmail(body?.email);
+    const guestName = String(body?.name || '').trim();
+    const { subject, text, html } = buildInviteEmail({ guestName, inviteUrl, expiresAt: created.expiresAt });
+
+    try {
+      await sendEmail(env, {
+        to: [guestEmail],
+        fromEmail,
+        fromName,
+        subject,
+        text,
+        html,
+      });
+    } catch (e) {
+      return jsonResponse(
+        { ok: false, error: e instanceof Error ? e.message : 'Failed to send invite email' },
+        { status: 502, headers: corsHeaders }
+      );
+    }
+
     return jsonResponse(
       {
         ok: true,
         token: created.token,
         expiresAt: created.expiresAt,
-        inviteUrl: inviteUrlForHost(host, created.token),
+        inviteUrl,
       },
       { status: 200, headers: corsHeaders }
     );
