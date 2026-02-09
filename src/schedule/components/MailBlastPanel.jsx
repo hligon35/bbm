@@ -355,6 +355,10 @@ export default function MailBlastPanel({ sessionEmail }) {
             className="bbm-form-submit"
             type="button"
             onClick={() => {
+              const confirmed = window.confirm(
+                'Clear the subscriber list from this screen?\n\nThis only clears what you\'re currently viewing/edits you\'ve made here. It does not change the saved list until you click “Save list”.'
+              );
+              if (!confirmed) return;
               setSubscribers([]);
               setSelected(new Set());
               setAddEmail('');
