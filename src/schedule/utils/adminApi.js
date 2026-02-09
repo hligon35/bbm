@@ -63,6 +63,13 @@ async function postJson(path, body) {
     data = null;
   }
 
+  // Our Worker APIs return a JSON shape like: { ok: boolean, ... }.
+  // Some deployments may still respond with HTTP 200 even when ok=false.
+  // Treat those as errors so the UI can show the correct message.
+  if (res.ok && data && data.ok === false) {
+    return { ok: false, error: data?.error || 'Request failed' };
+  }
+
   if (!res.ok) {
     return { ok: false, error: data?.error || `Request failed (${res.status})` };
   }

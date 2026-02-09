@@ -3,6 +3,12 @@ import React from 'react';
 import Layout from './Layout';
 import { useNavigate } from 'react-router-dom';
 
+const asset = (path) => {
+  const base = (import.meta.env.BASE_URL || '/');
+  const clean = String(path).replace(/^\/+/,'');
+  return `${base}${clean}`;
+};
+
 function App() {
   const navigate = useNavigate();
   const handlePlatformClick = (e) => {
@@ -17,6 +23,11 @@ function App() {
     <Layout>
       <header className="bbm-hero" id="top">
         <div className="bbm-overlay">
+          <div className="bbm-hero-hosts">
+            <img className="bbm-avatar" src={asset('images/Lovett.png')} alt="Host Mike Lovett" decoding="async" />
+            <img className="bbm-avatar" src={asset('images/CJ.jpg')} alt="Co-host Chris Johnson" decoding="async" />
+            <img className="bbm-avatar" src={asset('images/Ken.png')} alt="Co-host Ken Peak" decoding="async" />
+          </div>
           <h1 className="bbm-title">The Black Bridge Mindset</h1>
           <h2 className="bbm-subtitle">Where culture and entrepreneurship collide!</h2>
           <p className="bbm-intro">Welcome to The Black Bridge Mindset podcast, where culture, entrepreneurship, and business intersect to fuel inspiration. This podcast celebrates the power of diverse voices shaping the future of business.</p>
