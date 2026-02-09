@@ -21,7 +21,7 @@ export default function Episodes() {
             <div className="bbm-episodes-top-meta">
               <img
                 className="bbm-channel-avatar"
-                src={asset('images/bbmlogo.png')}
+                src={asset('images/bbmlogo.jpg')}
                 alt="Black Bridge Mindset channel"
                 decoding="async"
               />

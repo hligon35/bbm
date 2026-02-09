@@ -402,6 +402,7 @@ body, .bbm-root {
   border-radius: 1rem;
   box-shadow: 0 2px 16px #0005;
   background: #000;
+  border: 3px solid var(--bbm-accent);
 }
 
 .bbm-videos-embeds--row {
@@ -508,6 +509,7 @@ body, .bbm-root {
   border-radius: 1rem;
   box-shadow: 0 2px 16px #0005;
   background: #000;
+  border: 3px solid var(--bbm-accent);
 }
 
 @media (max-width: 1000px) {
@@ -764,6 +766,7 @@ html, body, .bbm-root {
   border-radius: 1rem;
   box-shadow: 0 2px 16px #0005;
   background: #000;
+  border: 3px solid var(--bbm-accent);
   display: block;
 }
 
@@ -826,6 +829,8 @@ html, body, .bbm-root {
   width: 92px;
   height: 92px;
   margin-bottom: 0;
+  border: 3px solid var(--bbm-accent);
+  background: #fff;
 }
 .bbm-title {
   font-size: 3.5rem;
