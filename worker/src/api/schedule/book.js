@@ -110,8 +110,7 @@ function buildBookingNotificationEmail({ booking, invite, timeLabel, timeZone, g
 
   const text =
     `New scheduled booking confirmed.\n\n` +
-    `Scheduled time: ${timeLabel}\n` +
-    `Time zone: ${tz}\n\n` +
+    `Scheduled time: ${timeLabel}\n\n` +
     (googleCalendarUrl ? `Add to Google Calendar: ${googleCalendarUrl}\n` : '') +
     (icsUrl ? `Download iCal (.ics): ${icsUrl}\n\n` : '\n') +
     `Guest (form): ${guestName}\n` +
@@ -164,8 +163,7 @@ function buildGuestConfirmationEmail({ booking, timeLabel, timeZone, googleCalen
   const text =
     `${greeting}\n\n` +
     `You're confirmed for your Black Bridge Mindset Podcast guest recording.\n\n` +
-    `Scheduled time: ${timeLabel}\n` +
-    `Time zone: ${tz}\n\n` +
+    `Scheduled time: ${timeLabel}\n\n` +
     (googleCalendarUrl ? `Add to Google Calendar: ${googleCalendarUrl}\n` : '') +
     (icsUrl ? `Download iCal (.ics): ${icsUrl}\n\n` : '\n') +
     (guestNotes ? `Notes you submitted:\n${guestNotes}\n\n` : '') +
@@ -178,7 +176,6 @@ function buildGuestConfirmationEmail({ booking, timeLabel, timeZone, googleCalen
       <p style="margin: 0 0 12px 0;">You're confirmed for your <b>Black Bridge Mindset Podcast</b> guest recording.</p>
 
       <p style="margin: 0 0 8px 0;"><b>Scheduled time:</b> ${escapeHtml(timeLabel)}</p>
-      <p style="margin: 0 0 18px 0;"><b>Time zone:</b> ${escapeHtml(tz)}</p>
 
       ${
         googleCalendarUrl || icsUrl

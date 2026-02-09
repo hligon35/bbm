@@ -36,6 +36,7 @@ export default function MailBlastPanel({ sessionEmail }) {
   const apiBase = useMemo(() => getScheduleApiBase(), []);
 
   const [subscribers, setSubscribers] = useState([]);
+  const [labels, setLabels] = useState(() => ({}));
   const [selected, setSelected] = useState(() => new Set());
   const [addEmail, setAddEmail] = useState('');
   const [subscribersState, setSubscribersState] = useState({ status: 'idle', error: '', info: '' });
@@ -63,6 +64,14 @@ export default function MailBlastPanel({ sessionEmail }) {
         seen.add(e);
         merged.push(e);
       }
+
+      setLabels((prevLabels) => {
+        const next = { ...(prevLabels || {}) };
+        for (const e of list) {
+          if (!next[e]) next[e] = 'subscriber';
+        }
+        return next;
+      });
 
       setSelected(new Set(merged));
       return merged;
@@ -95,7 +104,9 @@ export default function MailBlastPanel({ sessionEmail }) {
       }
 
       const list = Array.isArray(res.data?.subscribers) ? res.data.subscribers : [];
+      const labelMap = res.data?.labels && typeof res.data.labels === 'object' ? res.data.labels : {};
       setSubscribers(list);
+      setLabels(labelMap);
       setSelected(new Set(list));
       setSubscribersState({ status: 'ready', error: '', info: list.length ? `Loaded ${list.length} subscribers.` : 'No subscribers saved yet.' });
     }
@@ -122,7 +133,9 @@ export default function MailBlastPanel({ sessionEmail }) {
     }
 
     const saved = Array.isArray(res.data?.subscribers) ? res.data.subscribers : subscribers;
+    const labelMap = res.data?.labels && typeof res.data.labels === 'object' ? res.data.labels : labels;
     setSubscribers(saved);
+    setLabels(labelMap);
     setSelected(new Set(saved));
     setSubscribersState({ status: 'ready', error: '', info: `Saved ${saved.length} subscribers.` });
   }
@@ -311,7 +324,21 @@ export default function MailBlastPanel({ sessionEmail }) {
                     });
                   }}
                 />
-                <span style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace', fontSize: 13 }}>{email}</span>
+                <span
+                  style={{
+                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                    fontSize: 13,
+                    flex: 1,
+                    minWidth: 0,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {email}
+                </span>
+                <span style={{ fontSize: 12, opacity: 0.7, textTransform: 'lowercase' }}>
+                  {String(labels?.[email] || 'subscriber')}
+                </span>
               </label>
             ))
           )}

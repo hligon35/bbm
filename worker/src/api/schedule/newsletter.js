@@ -53,6 +53,20 @@ async function setSubscriberNames(env, map) {
   return { ok: true, status: 200 };
 }
 
+async function getSubscriberLabels(env) {
+  if (!env.SCHEDULE_CONFIG) return { ok: false, status: 501, error: 'Newsletter storage not configured' };
+  const value = await env.SCHEDULE_CONFIG.get('newsletter:subscriberLabels', { type: 'json' });
+  const map = value && typeof value === 'object' ? value : {};
+  return { ok: true, status: 200, map };
+}
+
+async function setSubscriberLabels(env, map) {
+  if (!env.SCHEDULE_CONFIG) return { ok: false, status: 501, error: 'Newsletter storage not configured' };
+  const safe = map && typeof map === 'object' ? map : {};
+  await env.SCHEDULE_CONFIG.put('newsletter:subscriberLabels', JSON.stringify(safe));
+  return { ok: true, status: 200 };
+}
+
 function buildWelcomeEmail({ firstName }) {
   const fn = String(firstName || '').trim();
   const greeting = fn ? `Hi ${fn},` : 'Hi,';
@@ -144,6 +158,18 @@ export async function handleNewsletterSubscribe(request, env, corsHeaders) {
       }
     } catch (e) {
       console.warn('newsletter name save failed', e);
+    }
+
+    // Best-effort: mark label as subscriber.
+    try {
+      const labels = await getSubscriberLabels(env);
+      if (labels.ok) {
+        const map = labels.map || {};
+        map[email] = 'subscriber';
+        await setSubscriberLabels(env, map);
+      }
+    } catch (e) {
+      console.warn('newsletter label save failed', e);
     }
 
     // Best-effort: send welcome email (from template).

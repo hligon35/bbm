@@ -52,6 +52,102 @@ function validateEmail(email) {
   return true;
 }
 
+function normalizeSubscriberLabel(value) {
+  const v = String(value || '').trim().toLowerCase();
+  if (v === 'guest') return 'guest';
+  return 'subscriber';
+}
+
+function normalizeName(value) {
+  const v = String(value || '').trim();
+  if (!v) return '';
+  return v.length > 60 ? v.slice(0, 60) : v;
+}
+
+async function getNewsletterSubscriberLabels(env) {
+  if (!env.SCHEDULE_CONFIG) return { ok: false, status: 501, error: 'Newsletter storage not configured' };
+
+  try {
+    const value = await env.SCHEDULE_CONFIG.get('newsletter:subscriberLabels', { type: 'json' });
+    const map = value && typeof value === 'object' ? value : {};
+    return { ok: true, status: 200, map };
+  } catch (e) {
+    console.warn('newsletter labels read failed', e);
+    return { ok: false, status: 500, error: 'Failed to read subscriber labels' };
+  }
+}
+
+async function setNewsletterSubscriberLabels(env, map) {
+  if (!env.SCHEDULE_CONFIG) return { ok: false, status: 501, error: 'Newsletter storage not configured' };
+
+  try {
+    const safe = map && typeof map === 'object' ? map : {};
+    await env.SCHEDULE_CONFIG.put('newsletter:subscriberLabels', JSON.stringify(safe));
+    return { ok: true, status: 200 };
+  } catch (e) {
+    console.warn('newsletter labels write failed', e);
+    return { ok: false, status: 500, error: 'Failed to save subscriber labels' };
+  }
+}
+
+async function getNewsletterSubscriberNames(env) {
+  if (!env.SCHEDULE_CONFIG) return { ok: false, status: 501, error: 'Newsletter storage not configured' };
+  try {
+    const value = await env.SCHEDULE_CONFIG.get('newsletter:subscriberNames', { type: 'json' });
+    const map = value && typeof value === 'object' ? value : {};
+    return { ok: true, status: 200, map };
+  } catch (e) {
+    console.warn('newsletter subscriberNames read failed', e);
+    return { ok: false, status: 500, error: 'Failed to read subscriber names' };
+  }
+}
+
+async function setNewsletterSubscriberNames(env, map) {
+  if (!env.SCHEDULE_CONFIG) return { ok: false, status: 501, error: 'Newsletter storage not configured' };
+  try {
+    const safe = map && typeof map === 'object' ? map : {};
+    await env.SCHEDULE_CONFIG.put('newsletter:subscriberNames', JSON.stringify(safe));
+    return { ok: true, status: 200 };
+  } catch (e) {
+    console.warn('newsletter subscriberNames write failed', e);
+    return { ok: false, status: 500, error: 'Failed to save subscriber names' };
+  }
+}
+
+async function addInviteRecipientToNewsletterBestEffort(env, { email, name }) {
+  const normalizedEmail = normalizeEmail(email);
+  const normalizedName = normalizeName(name);
+  if (!validateEmail(normalizedEmail)) return { ok: true, skipped: true };
+
+  // Best-effort only: invite creation should still succeed even if newsletter storage is unavailable.
+  try {
+    const current = await getNewsletterSubscribers(env);
+    if (current.ok) {
+      await setNewsletterSubscribers(env, [...(current.subscribers || []), normalizedEmail]);
+    }
+
+    if (normalizedName) {
+      const names = await getNewsletterSubscriberNames(env);
+      if (names.ok) {
+        const map = names.map && typeof names.map === 'object' ? names.map : {};
+        map[normalizedEmail] = normalizedName;
+        await setNewsletterSubscriberNames(env, map);
+      }
+    }
+
+    const labels = await getNewsletterSubscriberLabels(env);
+    if (labels.ok) {
+      const map = labels.map && typeof labels.map === 'object' ? labels.map : {};
+      map[normalizedEmail] = 'guest';
+      await setNewsletterSubscriberLabels(env, map);
+    }
+  } catch (e) {
+    console.warn('invite newsletter add failed', e);
+  }
+
+  return { ok: true };
+}
+
 async function getNewsletterSubscribers(env) {
   if (!env.SCHEDULE_CONFIG) return { ok: false, status: 501, error: 'Newsletter storage not configured' };
 
@@ -408,6 +504,8 @@ export async function handleAdmin(request, env, corsHeaders) {
       );
     }
 
+    await addInviteRecipientToNewsletterBestEffort(env, { email: guestEmail, name: guestName });
+
     return jsonResponse(
       {
         ok: true,
@@ -422,13 +520,35 @@ export async function handleAdmin(request, env, corsHeaders) {
   if (url.pathname === '/api/schedule/admin/newsletter/subscribers/get') {
     const res = await getNewsletterSubscribers(env);
     if (!res.ok) return jsonResponse({ ok: false, error: res.error }, { status: res.status, headers: corsHeaders });
-    return jsonResponse({ ok: true, subscribers: res.subscribers }, { status: 200, headers: corsHeaders });
+
+    const labelsRes = await getNewsletterSubscriberLabels(env);
+    const labelsMap = labelsRes.ok && labelsRes.map && typeof labelsRes.map === 'object' ? labelsRes.map : {};
+    const safeLabels = {};
+    for (const email of res.subscribers || []) {
+      safeLabels[email] = normalizeSubscriberLabel(labelsMap[email]);
+    }
+
+    return jsonResponse({ ok: true, subscribers: res.subscribers, labels: safeLabels }, { status: 200, headers: corsHeaders });
   }
 
   if (url.pathname === '/api/schedule/admin/newsletter/subscribers/set') {
     const res = await setNewsletterSubscribers(env, body?.subscribers);
     if (!res.ok) return jsonResponse({ ok: false, error: res.error }, { status: res.status, headers: corsHeaders });
-    return jsonResponse({ ok: true, subscribers: res.subscribers }, { status: 200, headers: corsHeaders });
+
+    // Best-effort: keep a labels map aligned to the saved list.
+    try {
+      const labelsRes = await getNewsletterSubscriberLabels(env);
+      const labelsMap = labelsRes.ok && labelsRes.map && typeof labelsRes.map === 'object' ? labelsRes.map : {};
+      const next = {};
+      for (const email of res.subscribers || []) {
+        next[email] = normalizeSubscriberLabel(labelsMap[email]);
+      }
+      await setNewsletterSubscriberLabels(env, next);
+      return jsonResponse({ ok: true, subscribers: res.subscribers, labels: next }, { status: 200, headers: corsHeaders });
+    } catch (e) {
+      console.warn('newsletter labels sync failed', e);
+      return jsonResponse({ ok: true, subscribers: res.subscribers }, { status: 200, headers: corsHeaders });
+    }
   }
 
   if (url.pathname === '/api/schedule/admin/newsletter/send') {
