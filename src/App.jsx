@@ -2,6 +2,7 @@
 import React from 'react';
 import Layout from './Layout';
 import { useNavigate } from 'react-router-dom';
+import YouTubeVideos from './YouTubeVideos';
 
 const asset = (path) => {
   const base = (import.meta.env.BASE_URL || '/');
@@ -23,10 +24,15 @@ function App() {
     <Layout>
       <header className="bbm-hero" id="top">
         <div className="bbm-overlay">
-          <div className="bbm-hero-hosts">
-            <img className="bbm-avatar" src={asset('images/Lovett.png')} alt="Host Mike Lovett" decoding="async" />
-            <img className="bbm-avatar" src={asset('images/CJ.jpg')} alt="Co-host Chris Johnson" decoding="async" />
-            <img className="bbm-avatar" src={asset('images/Ken.png')} alt="Co-host Ken Peak" decoding="async" />
+          <div className="bbm-hero-featured-video">
+            <iframe
+              src="https://www.youtube.com/embed/Y2jGf17MKE4?autoplay=1&mute=1&playsinline=1"
+              title="Featured episode"
+              frameBorder="0"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            ></iframe>
           </div>
           <h1 className="bbm-title">The Black Bridge Mindset</h1>
           <h2 className="bbm-subtitle">Where culture and entrepreneurship collide!</h2>
@@ -46,6 +52,10 @@ function App() {
             Listen on Your Favorite Platform
           </a>
         </div>
+      </section>
+
+      <section className="bbm-section bbm-youtube-home">
+        <YouTubeVideos variant="row" limit={6} showChannelLink={false} controls="chevrons" />
       </section>
     </Layout>
   );

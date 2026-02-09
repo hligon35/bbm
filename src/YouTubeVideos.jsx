@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 const CHANNEL_ID = 'UCzaxkVQzZ-okUD461Bif6PQ';
 const CHANNEL_URL = 'https://www.youtube.com/channel/UCzaxkVQzZ-okUD461Bif6PQ';
@@ -28,11 +28,12 @@ async function getUploadsPlaylistId({ apiKey, channelId }) {
   return uploads;
 }
 
-async function getAllUploadVideos({ apiKey, uploadsPlaylistId }) {
+async function getUploadVideos({ apiKey, uploadsPlaylistId, limit }) {
+  const max = Number.isFinite(limit) ? Math.max(1, Math.floor(limit)) : MAX_VIDEOS;
   const all = [];
   let pageToken = '';
 
-  while (all.length < MAX_VIDEOS) {
+  while (all.length < max) {
     const url = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
     url.searchParams.set('part', 'snippet,contentDetails');
     url.searchParams.set('maxResults', '50');
@@ -53,6 +54,8 @@ async function getAllUploadVideos({ apiKey, uploadsPlaylistId }) {
         publishedAt: item?.contentDetails?.videoPublishedAt || item?.snippet?.publishedAt || '',
         url: `https://www.youtube.com/watch?v=${videoId}`,
       });
+
+      if (all.length >= max) break;
     }
 
     pageToken = data?.nextPageToken || '';
@@ -62,16 +65,107 @@ async function getAllUploadVideos({ apiKey, uploadsPlaylistId }) {
   return all;
 }
 
-export default function YouTubeVideos() {
+export default function YouTubeVideos({
+  variant = 'grid',
+  limit,
+  showChannelLink = true,
+  autoScroll = false,
+  autoScrollThreshold = 0,
+  controls = 'none', // none | chevrons
+} = {}) {
   const [videos, setVideos] = useState([]);
   const [status, setStatus] = useState('idle'); // idle | loading | ready | error
   const [error, setError] = useState('');
+
+  const embedsRef = useRef(null);
+  const [autoScrollPaused, setAutoScrollPaused] = useState(false);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
 
   const showApiList = Boolean(API_KEY);
   const playlistEmbedUrl = useMemo(
     () => `https://www.youtube.com/embed?listType=playlist&list=${UPLOADS_PLAYLIST_ID}`,
     []
   );
+
+  const list = useMemo(() => {
+    if (!Number.isFinite(limit)) return videos;
+    return videos.slice(0, Math.max(1, Math.floor(limit)));
+  }, [videos, limit]);
+
+  useEffect(() => {
+    if (variant !== 'row') return;
+    if (controls !== 'chevrons') return;
+    if (status !== 'ready') return;
+
+    const el = embedsRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const node = embedsRef.current;
+      if (!node) return;
+      setCanScrollLeft(node.scrollLeft > 0);
+      setCanScrollRight(node.scrollLeft + node.clientWidth < node.scrollWidth - 1);
+    };
+
+    update();
+    el.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+
+    return () => {
+      el.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+    };
+  }, [controls, status, variant, list.length]);
+
+  useEffect(() => {
+    if (variant !== 'row') return;
+    if (!autoScroll) return;
+    if (autoScrollPaused) return;
+    if (status !== 'ready') return;
+
+    const threshold = Number.isFinite(autoScrollThreshold) ? Math.max(0, Math.floor(autoScrollThreshold)) : 0;
+    if (list.length <= threshold) return;
+
+    const el = embedsRef.current;
+    if (!el) return;
+
+    // Respect reduced motion.
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if (mq.matches) return;
+    }
+
+    let rafId = 0;
+    let lastTs = 0;
+    const speedPxPerSecond = 18;
+
+    const step = (ts) => {
+      if (!lastTs) lastTs = ts;
+      const dt = (ts - lastTs) / 1000;
+      lastTs = ts;
+
+      // If the user resized or there isn't anything to scroll, keep the loop alive.
+      if (el.scrollWidth <= el.clientWidth + 1) {
+        rafId = requestAnimationFrame(step);
+        return;
+      }
+
+      el.scrollLeft += speedPxPerSecond * dt;
+
+      // Loop back to start when reaching the end.
+      if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 1) {
+        el.scrollLeft = 0;
+      }
+
+      rafId = requestAnimationFrame(step);
+    };
+
+    rafId = requestAnimationFrame(step);
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [autoScroll, autoScrollPaused, autoScrollThreshold, list.length, status, variant]);
 
   useEffect(() => {
     if (!API_KEY) return;
@@ -82,7 +176,7 @@ export default function YouTubeVideos() {
       setError('');
       try {
         const uploadsPlaylistId = await getUploadsPlaylistId({ apiKey: API_KEY, channelId: CHANNEL_ID });
-        const allVideos = await getAllUploadVideos({ apiKey: API_KEY, uploadsPlaylistId });
+        const allVideos = await getUploadVideos({ apiKey: API_KEY, uploadsPlaylistId, limit });
         if (cancelled) return;
         setVideos(allVideos);
         setStatus('ready');
@@ -106,7 +200,7 @@ export default function YouTubeVideos() {
       <div style={{ textAlign: 'center', margin: '2rem 0' }}>
         <iframe
           width="100%"
-          height="480"
+          height={variant === 'row' ? '240' : '480'}
           src={playlistEmbedUrl}
           title="Black Bridge Mindset Episodes"
           frameBorder="0"
@@ -131,30 +225,107 @@ export default function YouTubeVideos() {
   if (status === 'error') return <div style={{ color: 'red' }}>{error || 'Failed to fetch videos.'}</div>;
   if (status !== 'ready') return <div>Loading videos...</div>;
 
+  const embedClassName = variant === 'row' ? 'bbm-videos-embeds bbm-videos-embeds--row' : 'bbm-videos-embeds';
+
+  const showChevronControls = variant === 'row' && controls === 'chevrons';
+
+  const handleChevronScroll = (direction) => {
+    const el = embedsRef.current;
+    if (!el) return;
+    const amount = el.clientWidth || 0;
+    if (!amount) return;
+    el.scrollBy({ left: direction * amount, behavior: 'smooth' });
+  };
+
   return (
     <div className="bbm-videos-list">
-      <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-        <a href={CHANNEL_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#f7c873', fontWeight: 600 }}>
-          View channel on YouTube
-        </a>
-      </div>
-      <div className="bbm-videos-embeds">
-        {videos.map((video) => (
-          <div className="bbm-video-item" key={video.videoId}>
-            <iframe
-              width="360"
-              height="215"
-              src={`https://www.youtube.com/embed/${video.videoId}`}
-              title={video.title}
-              frameBorder="0"
-              loading="lazy"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-            ></iframe>
-            <div className="bbm-video-title">{video.title}</div>
+      {showChannelLink ? (
+        <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+          <a href={CHANNEL_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#f7c873', fontWeight: 600 }}>
+            View channel on YouTube
+          </a>
+        </div>
+      ) : null}
+
+      {showChevronControls ? (
+        <div className="bbm-videos-row-shell">
+          <button
+            type="button"
+            className="bbm-carousel-btn"
+            onClick={() => handleChevronScroll(-1)}
+            disabled={!canScrollLeft}
+            aria-label="Scroll videos left"
+          >
+            <span className="bbm-carousel-icon" aria-hidden="true">
+              ‹
+            </span>
+          </button>
+
+          <div className="bbm-videos-viewport">
+            <div
+              className={embedClassName}
+              ref={embedsRef}
+              onMouseEnter={autoScroll ? () => setAutoScrollPaused(true) : undefined}
+              onMouseLeave={autoScroll ? () => setAutoScrollPaused(false) : undefined}
+              onFocusCapture={autoScroll ? () => setAutoScrollPaused(true) : undefined}
+              onBlurCapture={autoScroll ? () => setAutoScrollPaused(false) : undefined}
+            >
+              {list.map((video) => (
+                <div className="bbm-video-item" key={video.videoId}>
+                  <iframe
+                    width="360"
+                    height="215"
+                    src={`https://www.youtube.com/embed/${video.videoId}`}
+                    title={video.title}
+                    frameBorder="0"
+                    loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  ></iframe>
+                  <div className="bbm-video-title">{video.title}</div>
+                </div>
+              ))}
+            </div>
           </div>
-        ))}
-      </div>
+
+          <button
+            type="button"
+            className="bbm-carousel-btn"
+            onClick={() => handleChevronScroll(1)}
+            disabled={!canScrollRight}
+            aria-label="Scroll videos right"
+          >
+            <span className="bbm-carousel-icon" aria-hidden="true">
+              ›
+            </span>
+          </button>
+        </div>
+      ) : (
+        <div
+          className={embedClassName}
+          ref={variant === 'row' ? embedsRef : null}
+          onMouseEnter={variant === 'row' && autoScroll ? () => setAutoScrollPaused(true) : undefined}
+          onMouseLeave={variant === 'row' && autoScroll ? () => setAutoScrollPaused(false) : undefined}
+          onFocusCapture={variant === 'row' && autoScroll ? () => setAutoScrollPaused(true) : undefined}
+          onBlurCapture={variant === 'row' && autoScroll ? () => setAutoScrollPaused(false) : undefined}
+        >
+          {list.map((video) => (
+            <div className="bbm-video-item" key={video.videoId}>
+              <iframe
+                width="360"
+                height="215"
+                src={`https://www.youtube.com/embed/${video.videoId}`}
+                title={video.title}
+                frameBorder="0"
+                loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              ></iframe>
+              <div className="bbm-video-title">{video.title}</div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -289,6 +289,8 @@ body, .bbm-root {
   flex-direction: column;
   align-items: center;
   margin-bottom: 1.5rem;
+  width: 360px;
+  max-width: 100%;
 }
 .bbm-video-title {
   margin-top: 0.5rem;
@@ -296,7 +298,9 @@ body, .bbm-root {
   color: var(--bbm-accent);
   font-weight: 600;
   text-align: center;
-  max-width: 360px;
+  width: 100%;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   line-height: 1.3;
 }
 /* Podcast Platforms Grid */
@@ -400,6 +404,95 @@ body, .bbm-root {
   background: #000;
 }
 
+.bbm-videos-embeds--row {
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  -ms-overflow-style: none; /* IE/Edge legacy */
+}
+
+@supports (scrollbar-width: none) {
+  .bbm-videos-embeds--row {
+    scrollbar-width: none; /* Firefox */
+  }
+}
+
+.bbm-videos-embeds--row::-webkit-scrollbar {
+  display: none;
+}
+
+.bbm-videos-embeds--row .bbm-video-item {
+  flex: 0 0 auto;
+}
+
+/* Home page: smaller YouTube row */
+.bbm-youtube-home .bbm-videos-embeds--row {
+  gap: 0.5rem;
+}
+
+.bbm-youtube-home .bbm-videos-embeds--row iframe {
+  width: 240px;
+  height: 135px;
+}
+
+.bbm-youtube-home .bbm-video-item {
+  width: 240px;
+}
+
+.bbm-videos-row-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.bbm-videos-row-shell .bbm-videos-embeds--row {
+  padding-bottom: 0;
+}
+
+.bbm-videos-row-shell .bbm-video-item {
+  margin-bottom: 0;
+}
+
+.bbm-videos-viewport {
+  overflow: hidden;
+}
+
+.bbm-youtube-home .bbm-videos-viewport {
+  max-width: calc((240px * 3) + (0.5rem * 2));
+  width: 100%;
+}
+
+.bbm-carousel-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 2px solid var(--bbm-accent);
+  color: var(--bbm-accent);
+  border-radius: 999px;
+  width: 34px;
+  height: 54px;
+  padding: 0;
+  line-height: 1;
+  font-size: 2rem;
+  font-weight: 800;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.bbm-carousel-icon {
+  display: block;
+  transform: translateY(-5px);
+}
+
+.bbm-carousel-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 /* Buzzsprout (All Episodes) */
 .bbm-buzzsprout-player {
   margin-top: 1rem;
@@ -440,6 +533,35 @@ body, .bbm-root {
     height: 220px;
     max-width: 100%;
   }
+
+  .bbm-videos-embeds--row {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .bbm-videos-embeds--row iframe {
+    width: 300px;
+    height: 180px;
+    max-width: none;
+  }
+
+  .bbm-youtube-home .bbm-videos-embeds--row iframe {
+    width: 220px;
+    height: 124px;
+  }
+
+  .bbm-youtube-home .bbm-video-item {
+    width: 220px;
+  }
+
+  .bbm-youtube-home .bbm-videos-embeds--row {
+    gap: 0.5rem;
+  }
+
+  .bbm-youtube-home .bbm-videos-viewport {
+    max-width: calc((220px * 3) + (0.5rem * 2));
+  }
 }
 
 /* Global sizing and overflow fixes */
@@ -467,7 +589,7 @@ html, body, .bbm-root {
 }
 
 .bbm-hero {
-  background: url('/images/bbmlogo.jpg') center/cover no-repeat;
+  background: url('/images/bbmlogo.png') center/cover no-repeat;
   min-height: 45vh;
   display: flex;
   align-items: center;
@@ -489,6 +611,206 @@ html, body, .bbm-root {
   text-align: center;
   max-width: 700px;
   margin: 2rem auto;
+}
+
+.bbm-channel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+  text-align: left;
+  margin-bottom: 1.25rem;
+}
+
+.bbm-channel-avatar {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+.bbm-channel-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.bbm-channel-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--bbm-accent);
+  letter-spacing: 1px;
+  line-height: 1.15;
+}
+
+.bbm-channel-handle {
+  margin-top: 0.25rem;
+  font-size: 0.95rem;
+  color: #e0e0e0;
+}
+
+.bbm-channel-handle a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.bbm-channel-handle a:hover {
+  color: #fffbe6;
+  text-decoration: underline;
+}
+
+.bbm-channel-desc {
+  margin-top: 0.5rem;
+  color: #e0e0e0;
+  font-size: 0.98rem;
+  line-height: 1.35;
+}
+
+.bbm-channel-links {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.bbm-channel-links .bbm-channel-subscribe {
+  display: inline-flex;
+}
+
+.bbm-channel-card--center .bbm-channel-header {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin-bottom: 0;
+}
+
+.bbm-channel-card--center .bbm-channel-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bbm-channel-subscribe-img {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.bbm-channel-subscribe-img img {
+  height: 44px;
+  width: auto;
+  display: block;
+}
+
+.bbm-channel-subscribe-img:hover {
+  filter: brightness(1.05);
+}
+
+/* Episodes: top channel card layout */
+.bbm-channel-card--episodes .bbm-episodes-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.bbm-channel-card--episodes .bbm-episodes-top-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 0 0 auto;
+}
+
+.bbm-channel-card--episodes .bbm-channel-avatar {
+  width: 150px;
+  height: 150px;
+  border: 3px solid var(--bbm-accent);
+  background: #fff;
+}
+
+.bbm-channel-card--episodes .bbm-episodes-top-video {
+  flex: 0 1 auto;
+  display: flex;
+  justify-content: center;
+}
+
+.bbm-channel-card--episodes .bbm-episodes-top-video iframe {
+  width: 420px;
+  height: 236px;
+  max-width: 100%;
+  border-radius: 1rem;
+  box-shadow: 0 2px 16px #0005;
+  background: #000;
+}
+
+@media (max-width: 900px) {
+  .bbm-channel-card--episodes .bbm-episodes-top {
+    flex-direction: column;
+  }
+}
+
+/* Home hero: featured video replaces host photos */
+.bbm-hero-featured-video {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto 1rem auto;
+}
+
+.bbm-hero-featured-video iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  border-radius: 1rem;
+  box-shadow: 0 2px 16px #0005;
+  background: #000;
+  display: block;
+}
+
+.bbm-channel-links a {
+  color: var(--bbm-accent);
+  text-decoration: none;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.bbm-channel-links a:hover {
+  color: #fffbe6;
+  text-decoration: underline;
+}
+
+.bbm-channel-subscribe {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 1.25rem;
+  border-radius: 999px;
+  border: 2px solid var(--bbm-accent);
+  background: rgba(10,10,10,0.85);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.bbm-channel-subscribe:hover {
+  background: var(--bbm-accent);
+  color: #232323;
+}
+
+@media (max-width: 700px) {
+  .bbm-channel-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .bbm-channel-meta {
+    width: 100%;
+  }
 }
 
 .bbm-hero-hosts {
