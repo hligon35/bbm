@@ -244,8 +244,7 @@ export async function handleAdminAuth(request, env, corsHeaders) {
     }
 
     if (!isAllowedEmail(env, email)) {
-      // Avoid account enumeration.
-      return jsonResponse({ ok: true }, { status: 200, headers: corsHeaders });
+      return jsonResponse({ ok: false, error: 'Access denied' }, { status: 403, headers: corsHeaders });
     }
 
     const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || 'unknown';
@@ -296,7 +295,7 @@ export async function handleAdminAuth(request, env, corsHeaders) {
     }
 
     if (!isAllowedEmail(env, email)) {
-      return jsonResponse({ ok: false, error: 'Invalid code' }, { status: 401, headers: corsHeaders });
+      return jsonResponse({ ok: false, error: 'Access denied' }, { status: 403, headers: corsHeaders });
     }
 
     if (!env.SCHEDULE_CONFIG) {
