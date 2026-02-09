@@ -46,6 +46,15 @@ function normalizeEmail(value) {
   return String(value || '').trim().toLowerCase();
 }
 
+function timingSafeEqual(a, b) {
+  const aa = String(a);
+  const bb = String(b);
+  if (aa.length !== bb.length) return false;
+  let out = 0;
+  for (let i = 0; i < aa.length; i += 1) out |= aa.charCodeAt(i) ^ bb.charCodeAt(i);
+  return out === 0;
+}
+
 function parseAllowedEmails(env) {
   const raw = String(env.ADMIN_ALLOWED_EMAILS || '').trim();
   if (!raw) return [];
@@ -135,7 +144,7 @@ export async function verifyAdminSession(request, env) {
   const sig = value.slice(idx + 1);
 
   const expected = await hmacSha256Base64Url(secret, payload);
-  if (sig !== expected) return { ok: false, status: 401, error: 'Unauthorized' };
+  if (!timingSafeEqual(sig, expected)) return { ok: false, status: 401, error: 'Unauthorized' };
 
   let decoded;
   try {

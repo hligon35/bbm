@@ -6,11 +6,21 @@ import { handleAdminAuth } from './auth';
 import { handleNewsletterSubscribe } from './newsletter';
 import { handleBookingIcs } from './ics';
 
+function securityHeaders() {
+  return {
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'geolocation=(), camera=(), microphone=(), payment=(), usb=()',
+    'Cache-Control': 'no-store',
+  };
+}
+
 function jsonResponse(body, { status = 200, headers = {} } = {}) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
+      ...securityHeaders(),
       ...headers,
     },
   });
@@ -87,7 +97,7 @@ export async function handleScheduleRequest(request, env) {
   }
 
   if (request.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: cors });
+    return new Response(null, { status: 204, headers: { ...securityHeaders(), ...cors } });
   }
 
   if (request.method !== 'POST') {

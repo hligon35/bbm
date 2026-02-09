@@ -1,8 +1,18 @@
+function securityHeaders() {
+  return {
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'geolocation=(), camera=(), microphone=(), payment=(), usb=()',
+    'Cache-Control': 'no-store',
+  };
+}
+
 function textResponse(body, { status = 200, headers = {} } = {}) {
   return new Response(body, {
     status,
     headers: {
       'Content-Type': 'text/plain; charset=utf-8',
+      ...securityHeaders(),
       ...headers,
     },
   });
@@ -14,7 +24,7 @@ function icsResponse(body, filename = 'appointment.ics') {
     headers: {
       'Content-Type': 'text/calendar; charset=utf-8',
       'Content-Disposition': `attachment; filename="${filename}"`,
-      'Cache-Control': 'no-store',
+      ...securityHeaders(),
     },
   });
 }

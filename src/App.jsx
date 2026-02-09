@@ -29,16 +29,17 @@ function App() {
               src="https://www.youtube.com/embed/Y2jGf17MKE4?autoplay=1&mute=1&playsinline=1"
               title="Featured episode"
               frameBorder="0"
-              loading="lazy"
+              loading="eager"
+              referrerPolicy="strict-origin-when-cross-origin"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
             ></iframe>
           </div>
 
           <div className="bbm-hero-hosts">
-            <img className="bbm-avatar" src={asset('images/Lovett.png')} alt="Host Mike Lovett" decoding="async" />
-            <img className="bbm-avatar" src={asset('images/CJ.jpg')} alt="Co-host Chris Johnson" decoding="async" />
-            <img className="bbm-avatar" src={asset('images/Ken.png')} alt="Co-host Ken Peak" decoding="async" />
+            <img className="bbm-avatar" src={asset('images/Lovett.png')} alt="Host Mike Lovett" decoding="async" width="92" height="92" />
+            <img className="bbm-avatar" src={asset('images/CJ.jpg')} alt="Co-host Chris Johnson" decoding="async" width="92" height="92" />
+            <img className="bbm-avatar" src={asset('images/Ken.png')} alt="Co-host Ken Peak" decoding="async" width="92" height="92" />
           </div>
           <h1 className="bbm-title">The Black Bridge Mindset</h1>
           <h2 className="bbm-subtitle">Where culture and entrepreneurship collide!</h2>

@@ -8,21 +8,6 @@
   </head>
   <body>
     <p>Redirecting…</p>
-    <script>
-      // SPA deep-link helper for static hosts that return 404.html.
-      // Save the requested path, then load the app root. index.html will restore the path before React mounts.
-      (function () {
-        var l = window.location;
-        if (l.pathname === '/') return;
-
-        try {
-          sessionStorage.setItem('bbm_redirect', l.pathname + l.search + l.hash);
-        } catch (e) {
-          // ignore
-        }
-
-        l.replace('/');
-      })();
-    </script>
+    <script src="/spa-redirect.js" defer></script>
   </body>
 </html>
