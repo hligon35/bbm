@@ -9,10 +9,37 @@ export default function TimeSlotList({ slots, selectedSlot, onSelect }) {
     return <p>No times available right now.</p>;
   }
 
+  const localTimeZone = (() => {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    } catch {
+      return '';
+    }
+  })();
+
+  function toLocalDayLabel(iso) {
+    const d = new Date(String(iso || ''));
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+    });
+  }
+
+  function toLocalTimeLabel(iso) {
+    const d = new Date(String(iso || ''));
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  }
+
   const sorted = [...slots].sort((a, b) => String(a?.start || '').localeCompare(String(b?.start || '')));
   const groups = new Map();
   for (const slot of sorted) {
-    const dayLabel = String(slot?.dayLabel || '').trim();
+    const dayLabel = toLocalDayLabel(slot?.start) || String(slot?.dayLabel || '').trim();
     const key = dayLabel || 'Available times';
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(slot);
@@ -21,6 +48,9 @@ export default function TimeSlotList({ slots, selectedSlot, onSelect }) {
   return (
     <div>
       <h2 style={{ fontSize: 18, marginTop: 24 }}>Available times</h2>
+      <p style={{ opacity: 0.75, margin: '8px 0 0 0' }}>
+        Times are shown in your local time{localTimeZone ? ` (${localTimeZone})` : ''}.
+      </p>
 
       {[...groups.entries()].map(([day, daySlots]) => (
         <details key={day} style={{ marginTop: 14 }}>
@@ -45,7 +75,7 @@ export default function TimeSlotList({ slots, selectedSlot, onSelect }) {
           >
             {daySlots.map((slot) => {
               const isSelected = selectedSlot?.id === slot.id;
-              const title = slot?.timeLabel || slot?.label;
+              const title = toLocalTimeLabel(slot?.start) || slot?.timeLabel || slot?.label;
               return (
                 <button
                   key={slot.id}

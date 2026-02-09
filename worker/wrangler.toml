@@ -13,7 +13,7 @@ routes = [
 
 [vars]
 # Where contact emails get delivered
-EMAIL_TO = "ceejae06@gmail.com"
+EMAIL_TO = "hligon@getsparqd.com"
 
 # IMPORTANT: Use a FROM address on a domain you control (recommended)
 # Example: "noreply@blackbridgemindset.com"

@@ -213,7 +213,7 @@ export default function MailBlastPanel({ sessionEmail }) {
       </h3>
 
       <p className="bbm-contact-text" style={{ textAlign: 'center', opacity: 0.9, fontSize: 14 }}>
-        This sends your message to saved subscribers via the same API host as scheduling.
+        {/* This sends your message to saved subscribers via the same API host as scheduling. */}
         {apiBase ? (
           <>
             {' '}

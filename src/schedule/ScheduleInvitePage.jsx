@@ -75,6 +75,14 @@ export default function ScheduleInvitePage() {
   async function handleBook({ name, email, notes }) {
     if (!token || !selectedSlot) return;
 
+    const detectedTimeZone = (() => {
+      try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+      } catch {
+        return '';
+      }
+    })();
+
     setBookingState({ status: 'submitting', result: null, error: null });
     const res = await submitBooking({
       token,
@@ -82,6 +90,7 @@ export default function ScheduleInvitePage() {
       email,
       notes,
       datetime: selectedSlot.start,
+      timeZone: detectedTimeZone,
     });
 
     if (!res.ok) {

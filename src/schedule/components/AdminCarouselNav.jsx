@@ -12,7 +12,8 @@ export default function AdminCarouselNav({ items, activeId, onChange }) {
         style={{
           display: 'flex',
           justifyContent: 'center',
-          gap: 10,
+          columnGap: 100,
+          rowGap: 10,
           flexWrap: 'wrap',
         }}
       >

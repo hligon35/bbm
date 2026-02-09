@@ -4,6 +4,7 @@ import { handleSlots } from './slots';
 import { handleAdmin } from './admin';
 import { handleAdminAuth } from './auth';
 import { handleNewsletterSubscribe } from './newsletter';
+import { handleBookingIcs } from './ics';
 
 function jsonResponse(body, { status = 200, headers = {} } = {}) {
   return new Response(JSON.stringify(body), {
@@ -79,6 +80,11 @@ export async function handleScheduleRequest(request, env) {
   const devMode = String(env.SCHEDULE_DEV_MODE || '').toLowerCase() === 'true';
   const allowedOrigins = parseAllowedOrigins(env);
   const cors = corsHeadersFor(origin, allowedOrigins, { devMode });
+
+  // iCal downloads are triggered from email clients and should be GET.
+  if (url.pathname === '/api/schedule/booking/ics') {
+    return handleBookingIcs(request, env);
+  }
 
   if (request.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: cors });

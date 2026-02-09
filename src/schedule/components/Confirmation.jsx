@@ -5,6 +5,20 @@ import React from 'react';
  * Replace later with a branded success page, email instructions, etc.
  */
 export default function Confirmation({ booking, slot, inviteEmail }) {
+  const whenLocal = (() => {
+    const iso = slot?.start;
+    if (!iso) return '';
+    const d = new Date(String(iso));
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  })();
+
   return (
     <div style={{ border: '1px solid #e6e6e6', borderRadius: 12, padding: 16 }}>
       <h1 style={{ marginTop: 0 }}>Booked</h1>
@@ -12,7 +26,7 @@ export default function Confirmation({ booking, slot, inviteEmail }) {
 
       {slot ? (
         <p>
-          <b>When:</b> {slot.label}
+          <b>When:</b> {whenLocal || slot.label}
         </p>
       ) : null}
 
@@ -28,7 +42,13 @@ export default function Confirmation({ booking, slot, inviteEmail }) {
         </p>
       ) : null}
 
-      <p style={{ opacity: 0.75 }}>(Calendar integration will be added later.)</p>
+      {booking?.guestEmailSent ? (
+        <p style={{ opacity: 0.8, marginBottom: 0 }}>A confirmation email was sent with calendar links.</p>
+      ) : (
+        <p style={{ opacity: 0.8, marginBottom: 0 }}>
+          If you don’t see a confirmation email, please check your spam folder.
+        </p>
+      )}
     </div>
   );
 }
