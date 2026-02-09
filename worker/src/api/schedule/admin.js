@@ -268,6 +268,19 @@ function parseAllowedOrigins(env) {
     .filter(Boolean);
 }
 
+function isLocalhostOrigin(origin) {
+  if (!origin) return false;
+  try {
+    const u = new URL(origin);
+    return (
+      (u.protocol === 'http:' || u.protocol === 'https:') &&
+      (u.hostname === 'localhost' || u.hostname === '127.0.0.1' || u.hostname === '::1')
+    );
+  } catch {
+    return false;
+  }
+}
+
 function getPublicSiteOrigin(env, fallbackHost) {
   const explicit = String(env.SCHEDULE_PUBLIC_ORIGIN || '').trim();
   if (explicit) return explicit.replace(/\/+$/, '');
@@ -318,14 +331,19 @@ function enforceAdminHost(request, env, corsHeaders) {
   return null;
 }
 
-function inviteUrlForHost(env, host, token) {
-  // Use a stable, canonical origin so the invite page and /api/schedule/*
-  // endpoints resolve on an allowed origin (avoids www/apex mismatches).
-  if (isDevMode(env)) {
-    return `https://${host}/schedule/${token}`;
-  }
+function inviteUrlForRequest(request, env, fallbackHost, token) {
+  // Prefer the page origin that initiated the invite creation.
+  // This keeps local dev invites on localhost, and production invites on the real domain.
+  const reqOrigin = String(request.headers.get('Origin') || '').trim();
+  const allowed = parseAllowedOrigins(env);
+  const devMode = isDevMode(env);
 
-  const origin = getPublicSiteOrigin(env, host);
+  const originAllowed =
+    (allowed.includes('*') && Boolean(reqOrigin)) ||
+    (reqOrigin && allowed.includes(reqOrigin)) ||
+    (devMode && isLocalhostOrigin(reqOrigin));
+
+  const origin = originAllowed ? reqOrigin.replace(/\/+$/, '') : getPublicSiteOrigin(env, fallbackHost);
   return `${origin}/schedule/${token}`;
 }
 
@@ -364,7 +382,7 @@ export async function handleAdmin(request, env, corsHeaders) {
     }
 
     const host = getRequestHost(request);
-    const inviteUrl = inviteUrlForHost(env, host, created.token);
+    const inviteUrl = inviteUrlForRequest(request, env, host, created.token);
 
     const fromEmail = String(env.EMAIL_FROM || '').trim();
     const fromName = String(env.FROM_NAME || 'Black Bridge Mindset').trim();

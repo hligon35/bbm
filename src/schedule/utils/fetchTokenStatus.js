@@ -27,7 +27,9 @@ export async function fetchTokenStatus(token) {
         payload = null;
       }
 
-      return { ok: false, status: res.status, error: payload?.error || 'Invalid or expired link' };
+      const reason = payload?.reason ? String(payload.reason) : '';
+      const error = payload?.error || 'Invalid or expired link';
+      return { ok: false, status: res.status, error: reason ? `${error} (${reason})` : error };
     }
 
     const data = await res.json();

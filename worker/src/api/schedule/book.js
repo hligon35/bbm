@@ -1,6 +1,7 @@
 import { validateScheduleToken } from './validate';
 import { computeAvailableSlots, isDatetimeInSlots } from './availability';
 import { getAvailabilityConfig } from './config';
+import { sendEmail } from '../../email';
 
 function jsonResponse(body, { status = 200, headers = {} } = {}) {
   return new Response(JSON.stringify(body), {
@@ -15,6 +16,85 @@ function jsonResponse(body, { status = 200, headers = {} } = {}) {
 function uuid() {
   // `crypto.randomUUID()` is available in Workers.
   return crypto.randomUUID();
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function formatBookingTime(datetimeIso, timeZone) {
+  const iso = String(datetimeIso || '').trim();
+  const tz = String(timeZone || '').trim() || 'America/Chicago';
+
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZoneName: 'short',
+    }).format(d);
+  } catch {
+    return d.toLocaleString('en-US');
+  }
+}
+
+function buildBookingNotificationEmail({ booking, invite, timeLabel, timeZone }) {
+  const subject = 'New BBM Podcast Recording Scheduled';
+
+  const guestName = String(booking?.name || '').trim();
+  const guestEmail = String(booking?.email || '').trim();
+  const guestNotes = String(booking?.notes || '').trim();
+  const inviteName = String(invite?.name || '').trim();
+  const inviteEmail = String(invite?.email || '').trim();
+  const tz = String(timeZone || '').trim() || 'America/Chicago';
+
+  const text =
+    `New scheduling booking confirmed.\n\n` +
+    `Chosen time: ${timeLabel}\n` +
+    `Time zone: ${tz}\n\n` +
+    `Guest (form): ${guestName}\n` +
+    `Guest email (form): ${guestEmail}\n` +
+    (guestNotes ? `Notes: ${guestNotes}\n\n` : '\n') +
+    `Invite metadata:\n` +
+    (inviteName ? `- Name: ${inviteName}\n` : '') +
+    (inviteEmail ? `- Email: ${inviteEmail}\n` : '') +
+    `- Token: ${String(booking?.token || '').trim()}\n` +
+    `- Booking ID: ${String(booking?.id || '').trim()}\n`;
+
+  const html = `
+    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height: 1.55;">
+      <h2 style="margin: 0 0 12px 0;">New scheduling booking confirmed</h2>
+
+      <p style="margin: 0 0 10px 0;"><b>Chosen time:</b> ${escapeHtml(timeLabel)}</p>
+      <p style="margin: 0 0 18px 0;"><b>Time zone:</b> ${escapeHtml(tz)}</p>
+
+      <h3 style="margin: 0 0 10px 0; font-size: 16px;">Guest (form)</h3>
+      <p style="margin: 0 0 6px 0;"><b>Name:</b> ${escapeHtml(guestName)}</p>
+      <p style="margin: 0 0 14px 0;"><b>Email:</b> ${escapeHtml(guestEmail)}</p>
+
+      ${guestNotes ? `<p style="margin: 0 0 18px 0;"><b>Notes:</b><br />${escapeHtml(guestNotes).replaceAll('\n', '<br />')}</p>` : ''}
+
+      <h3 style="margin: 0 0 10px 0; font-size: 16px;">Invite metadata</h3>
+      ${inviteName ? `<p style="margin: 0 0 6px 0;"><b>Name:</b> ${escapeHtml(inviteName)}</p>` : ''}
+      ${inviteEmail ? `<p style="margin: 0 0 6px 0;"><b>Email:</b> ${escapeHtml(inviteEmail)}</p>` : ''}
+      <p style="margin: 0 0 6px 0;"><b>Token:</b> ${escapeHtml(String(booking?.token || '').trim())}</p>
+      <p style="margin: 0;"><b>Booking ID:</b> ${escapeHtml(String(booking?.id || '').trim())}</p>
+    </div>
+  `;
+
+  return { subject, text, html };
 }
 
 /**
@@ -218,11 +298,40 @@ export async function handleBook(request, env, corsHeaders) {
 
   await createGoogleCalendarEventPlaceholder(env, booking);
 
+  // Booking notification email (internal)
+  let emailSent = false;
+  let emailError = null;
+  try {
+    const fromEmail = String(env.EMAIL_FROM || '').trim();
+    const fromName = String(env.FROM_NAME || 'Black Bridge Mindset').trim();
+    if (fromEmail) {
+      const tz = String(cfg?.availability?.timezone || 'America/Chicago').trim() || 'America/Chicago';
+      const timeLabel = formatBookingTime(datetime, tz);
+      const invite = tokenResult?.data || null;
+      const { subject, text, html } = buildBookingNotificationEmail({ booking, invite, timeLabel, timeZone: tz });
+      await sendEmail(env, {
+        to: ['info@blackbridgemindset.com', 'hligon@getsparqd.com'],
+        fromEmail,
+        fromName,
+        replyTo: email,
+        subject,
+        text,
+        html,
+      });
+      emailSent = true;
+    }
+  } catch (e) {
+    emailError = e instanceof Error ? e.message : 'Failed to send booking notification email';
+    console.error('booking notification email failed', e);
+  }
+
   return jsonResponse(
     {
       ok: true,
       bookingId: booking.id,
       storage: storage.storage,
+      emailSent,
+      emailError,
     },
     { status: 200, headers: corsHeaders }
   );

@@ -23,8 +23,18 @@ export default function TimeSlotList({ slots, selectedSlot, onSelect }) {
       <h2 style={{ fontSize: 18, marginTop: 24 }}>Available times</h2>
 
       {[...groups.entries()].map(([day, daySlots]) => (
-        <div key={day} style={{ marginTop: 14 }}>
-          {day !== 'Available times' ? <h3 style={{ fontSize: 16, margin: '10px 0 0 0' }}>{day}</h3> : null}
+        <details key={day} style={{ marginTop: 14 }}>
+          <summary
+            style={{
+              fontSize: 16,
+              fontWeight: 700,
+              cursor: 'pointer',
+              padding: '10px 0 0 0',
+            }}
+          >
+            {day}
+          </summary>
+
           <div
             style={{
               display: 'grid',
@@ -56,7 +66,7 @@ export default function TimeSlotList({ slots, selectedSlot, onSelect }) {
               );
             })}
           </div>
-        </div>
+        </details>
       ))}
     </div>
   );
