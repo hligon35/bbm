@@ -943,6 +943,11 @@ html, body, .bbm-root {
   object-fit: cover;
   object-position: center;
 }
+
+/* Hosts (Trio): add accent ring without affecting layout */
+.bbm-trio-photo .bbm-avatar {
+  box-shadow: 0 0 0 3px var(--bbm-accent), 0 2px 16px #0005;
+}
 .bbm-trio-photo h3 {
   margin: 0 0 0.25rem 0;
   font-size: 1.25rem;
