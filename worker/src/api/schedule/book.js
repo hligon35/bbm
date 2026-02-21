@@ -528,7 +528,7 @@ export async function handleBook(request, env, corsHeaders) {
           icsUrl,
         });
         await sendEmail(env, {
-          to: ['info@blackbridgemindset.com'],
+          to: ['info@blackbridgemindset.com', 'ceejae06@gmail.com', 'flotus2016@gmail.com'],
           fromEmail,
           fromName,
           replyTo: email,

@@ -28,6 +28,7 @@ export function wrapBbmEmailHtml({
   const text = '#ffffff';
   const muted = '#bdbdbd';
   const accent = '#f7c873';
+  const logoUrl = 'https://blackbridgemindset.com/images/bbmlogo.png';
 
   // A common Outlook trick: include a lot of whitespace after the preheader.
   const preheaderPadding = '&nbsp;'.repeat(200);
@@ -52,7 +53,7 @@ export function wrapBbmEmailHtml({
           <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px; max-width:600px;">
             <tr>
               <td style="padding:0 0 14px 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;">
-                <div style="font-size:12px; letter-spacing:3px; text-transform:uppercase; color:${muted};">Black Bridge Mindset</div>
+                <div style="font-size:12px; letter-spacing:3px; text-transform:uppercase; color:${accent}; font-weight:800;">Black Bridge Mindset</div>
                 ${t ? `<div style="margin-top:10px; font-size:20px; font-weight:700; color:${text};">${t}</div>` : ''}
                 <div style="margin-top:12px; height:2px; background:${accent}; width:100%;"></div>
               </td>
@@ -64,12 +65,26 @@ export function wrapBbmEmailHtml({
             </tr>
             <tr>
               <td style="padding:14px 2px 0 2px; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; color:${muted}; font-size:12px; line-height:1.5;">
-                ${
-                  footer
-                    ? footer
-                    : `<div>Black Bridge Mindset</div>
-                       <div style="margin-top:6px;">If this email isn’t relevant to you, you can ignore it.</div>`
-                }
+                ${(() => {
+                  const brand = `
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;">
+                      <tr>
+                        <td valign="middle" style="padding:0 10px 0 0;">
+                          <img src="${logoUrl}" width="22" height="22" alt="Black Bridge Mindset" style="display:block; width:22px; height:22px; border-radius:999px; border:1px solid rgba(247,200,115,0.45);" />
+                        </td>
+                        <td valign="middle" style="padding:0; font-weight:800; color:${accent}; letter-spacing:0.3px;">
+                          Black Bridge Mindset
+                        </td>
+                      </tr>
+                    </table>
+                  `;
+
+                  if (footer) {
+                    return `${brand}<div style="margin-top:8px;">${footer}</div>`;
+                  }
+
+                  return `${brand}<div style="margin-top:6px;">If this email isn’t relevant to you, you can ignore it.</div>`;
+                })()}
               </td>
             </tr>
           </table>

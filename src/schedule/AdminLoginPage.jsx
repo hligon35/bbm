@@ -157,6 +157,13 @@ export default function AdminLoginPage({ onSuccess }) {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.isComposing) return;
+                if (step !== 'email') return;
+                if (e.key !== 'Enter') return;
+                // Some browsers/mobile keyboards don't always trigger form submit here.
+                handleSendCode(e);
+              }}
               placeholder="you@example.com"
               autoComplete="email"
               inputMode="email"

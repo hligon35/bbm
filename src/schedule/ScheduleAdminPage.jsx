@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import Layout from '../Layout';
@@ -44,6 +44,10 @@ function availabilitySignature(value) {
 
 export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEmail = null, onUnauthorized, onLoggedOut }) {
   const navigate = useNavigate();
+
+  const helpBtnRef = useRef(null);
+  const helpPopoverRef = useRef(null);
+  const tourTooltipRef = useRef(null);
 
   const TIMEZONE_OPTIONS = [
     'America/Chicago',
@@ -105,6 +109,238 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
   });
 
   const [activePanel, setActivePanel] = useState('scheduler');
+
+  const tours = useMemo(
+    () => ({
+      scheduler: [
+        {
+          target: 'admin-tab-scheduler',
+          title: 'Scheduler',
+          body: 'This is the Scheduler panel. It controls availability + guest invite links.',
+        },
+        {
+          target: 'scheduler-top-controls',
+          title: 'Top settings',
+          body: 'Set your timezone, slot duration, and booking window.',
+        },
+        {
+          target: 'scheduler-weekly-hours-grid',
+          title: 'Weekly hours',
+          body: 'Enable days and pick start/end times for your bookable schedule.',
+        },
+        {
+          target: 'scheduler-save-availability',
+          title: 'Save',
+          body: 'Click to publish the availability settings.',
+        },
+        {
+          target: 'scheduler-invite-fields',
+          title: 'Guest invite link',
+          body: 'Generate a private scheduling link for a specific guest (name + email + expiration).',
+        },
+      ],
+      mail: [
+        {
+          target: 'admin-tab-mail',
+          title: 'Mail Blast',
+          body: 'This is the Mail Blast panel for sending updates/newsletters.',
+        },
+        {
+          target: 'mail-subscribers-manage',
+          title: 'Subscribers',
+          body: 'Add emails, select recipients, and save the list before sending.',
+        },
+        {
+          target: 'mail-compose-fields',
+          title: 'Compose',
+          body: 'Write a subject and plain-text message for your update.',
+        },
+        {
+          target: 'mail-test-email',
+          title: 'Send a test',
+          body: 'Send a test email to yourself (or any address) before mailing the full list.',
+        },
+        {
+          target: 'mail-send-buttons',
+          title: 'Send campaign',
+          body: 'When you’re ready, send to the selected subscribers.',
+        },
+      ],
+    }),
+    []
+  );
+
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [helpAnchor, setHelpAnchor] = useState({ top: 0, left: 0 });
+
+  const [tour, setTour] = useState({ active: false, id: null, step: 0 });
+  const [tourTargetRect, setTourTargetRect] = useState(null);
+  const [tourPlacement, setTourPlacement] = useState('right');
+  const [tourTooltipPos, setTourTooltipPos] = useState({ top: 20, left: 20 });
+
+  const activeTourSteps = tour.active && tour.id && tours[tour.id] ? tours[tour.id] : [];
+  const activeStep = activeTourSteps[tour.step] || null;
+
+  function stopTour() {
+    setTour({ active: false, id: null, step: 0 });
+    setTourTargetRect(null);
+  }
+
+  function startTour(id) {
+    const nextPanel = id === 'mail' ? 'mail' : 'scheduler';
+    setHelpOpen(false);
+    setActivePanel(nextPanel);
+    setTour({ active: true, id, step: 0 });
+  }
+
+  function nextTourStep() {
+    if (!tour.active) return;
+    const steps = activeTourSteps;
+    const last = Math.max(0, steps.length - 1);
+    if (tour.step >= last) {
+      stopTour();
+      return;
+    }
+    setTour((t) => ({ ...t, step: t.step + 1 }));
+  }
+
+  function prevTourStep() {
+    if (!tour.active) return;
+    setTour((t) => ({ ...t, step: Math.max(0, t.step - 1) }));
+  }
+
+  useEffect(() => {
+    function onKeyDown(e) {
+      if (e.key === 'Escape') {
+        if (helpOpen) setHelpOpen(false);
+        if (tour.active) stopTour();
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [helpOpen, tour.active]);
+
+  useEffect(() => {
+    if (!helpOpen) return;
+
+    function onPointerDown(e) {
+      const t = e.target;
+      if (!(t instanceof Element)) return;
+      if (helpBtnRef.current && helpBtnRef.current.contains(t)) return;
+      if (helpPopoverRef.current && helpPopoverRef.current.contains(t)) return;
+      setHelpOpen(false);
+    }
+
+    window.addEventListener('pointerdown', onPointerDown);
+    return () => window.removeEventListener('pointerdown', onPointerDown);
+  }, [helpOpen]);
+
+  useLayoutEffect(() => {
+    if (!helpOpen) return;
+    const btn = helpBtnRef.current;
+    if (!btn) return;
+
+    const rect = btn.getBoundingClientRect();
+    const padding = 12;
+    const popoverWidth = 220;
+    const left = Math.min(Math.max(padding, rect.left), Math.max(padding, window.innerWidth - popoverWidth - padding));
+    const top = rect.bottom + 10;
+    setHelpAnchor({ top, left });
+  }, [helpOpen]);
+
+  useLayoutEffect(() => {
+    if (!tour.active || !activeStep) return;
+
+    let raf = 0;
+    function measure() {
+      const el = document.querySelector(`[data-bbm-tour="${activeStep.target}"]`);
+      if (!(el instanceof HTMLElement)) {
+        setTourTargetRect(null);
+        return;
+      }
+
+      try {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+      } catch {
+        // ignore
+      }
+
+      const rect = el.getBoundingClientRect();
+
+      const padAttr = el.getAttribute('data-bbm-tour-pad');
+      const padRaw = padAttr ? Number(padAttr) : 6;
+      const pad = Number.isFinite(padRaw) ? Math.max(0, Math.min(20, padRaw)) : 6;
+
+      const top = Math.max(0, rect.top - pad);
+      const left = Math.max(0, rect.left - pad);
+      const width = Math.min(window.innerWidth - left, rect.width + pad * 2);
+      const height = Math.min(window.innerHeight - top, rect.height + pad * 2);
+
+      let radius = 16;
+      try {
+        const cr = parseFloat(getComputedStyle(el).borderRadius || '');
+        if (Number.isFinite(cr)) radius = cr;
+      } catch {
+        // ignore
+      }
+      const borderRadius = Math.min(24, Math.max(10, radius + 4));
+
+      setTourTargetRect({ top, left, width, height, borderRadius });
+    }
+
+    raf = window.requestAnimationFrame(measure);
+    window.addEventListener('resize', measure);
+    window.addEventListener('scroll', measure, true);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener('resize', measure);
+      window.removeEventListener('scroll', measure, true);
+    };
+  }, [tour.active, tour.id, tour.step, activePanel, activeStep]);
+
+  useLayoutEffect(() => {
+    if (!tour.active) return;
+    if (!tourTargetRect) return;
+    const tip = tourTooltipRef.current;
+    if (!tip) return;
+
+    const padding = 12;
+    const rect = tourTargetRect;
+    const tipRect = tip.getBoundingClientRect();
+
+    const spaceRight = window.innerWidth - (rect.left + rect.width);
+    const spaceLeft = rect.left;
+    const spaceBottom = window.innerHeight - (rect.top + rect.height);
+    const spaceTop = rect.top;
+
+    let placement = 'right';
+    if (spaceRight >= tipRect.width + padding) placement = 'right';
+    else if (spaceLeft >= tipRect.width + padding) placement = 'left';
+    else if (spaceBottom >= tipRect.height + padding) placement = 'bottom';
+    else placement = 'top';
+
+    const clamp = (n, min, max) => Math.min(Math.max(n, min), max);
+
+    let top = padding;
+    let left = padding;
+    if (placement === 'right') {
+      left = rect.left + rect.width + 14;
+      top = clamp(rect.top + rect.height / 2 - tipRect.height / 2, padding, window.innerHeight - tipRect.height - padding);
+    } else if (placement === 'left') {
+      left = rect.left - tipRect.width - 14;
+      top = clamp(rect.top + rect.height / 2 - tipRect.height / 2, padding, window.innerHeight - tipRect.height - padding);
+    } else if (placement === 'bottom') {
+      left = clamp(rect.left + rect.width / 2 - tipRect.width / 2, padding, window.innerWidth - tipRect.width - padding);
+      top = rect.top + rect.height + 14;
+    } else {
+      left = clamp(rect.left + rect.width / 2 - tipRect.width / 2, padding, window.innerWidth - tipRect.width - padding);
+      top = rect.top - tipRect.height - 14;
+    }
+
+    setTourPlacement(placement);
+    setTourTooltipPos({ top, left });
+  }, [tour.active, tourTargetRect, tour.step]);
 
   const [availabilityState, setAvailabilityState] = useState({ status: 'idle', data: null, error: null });
   const [availabilityDraft, setAvailabilityDraft] = useState(defaultAvailability());
@@ -238,7 +474,20 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
     <Layout>
       <section className="bbm-section">
         <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <h2 style={{ margin: 0 }}>Admin</h2>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+            <h2 style={{ margin: 0 }}>Admin</h2>
+            <button
+              ref={helpBtnRef}
+              className="bbm-help-btn"
+              type="button"
+              aria-label="Help"
+              aria-haspopup="menu"
+              aria-expanded={helpOpen}
+              onClick={() => setHelpOpen((v) => !v)}
+            >
+              ?
+            </button>
+          </div>
           {sessionState.status === 'ready' ? (
             <button className="bbm-form-submit" type="button" onClick={handleLogout} style={{ marginTop: 0 }}>
               Log out
@@ -246,21 +495,40 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
           ) : null}
         </div>
 
+        {helpOpen ? (
+          <div
+            ref={helpPopoverRef}
+            className="bbm-help-popover"
+            role="menu"
+            style={{ top: helpAnchor.top, left: helpAnchor.left }}
+          >
+            <button className="bbm-help-item" type="button" role="menuitem" onClick={() => startTour('scheduler')}>
+              Scheduler
+            </button>
+            <button className="bbm-help-item" type="button" role="menuitem" onClick={() => startTour('mail')}>
+              Mail Blast
+            </button>
+          </div>
+        ) : null}
+
         {sessionState.status !== 'ready' ? (
           <p className="bbm-contact-text" style={{ textAlign: 'center' }}>Checking session…</p>
         ) : (
           <div style={{ maxWidth: 760, margin: '0 auto' }}>
-            <AdminCarouselNav items={adminPanels} activeId={activePanel} onChange={setActivePanel} />
+            <div data-bbm-tour="admin-panels">
+              <AdminCarouselNav items={adminPanels} activeId={activePanel} onChange={setActivePanel} />
+            </div>
 
             {activePanel === 'scheduler' ? (
               <>
-                <form onSubmit={handleSaveAvailability} className="bbm-contact-form">
+                <form data-bbm-tour="scheduler-availability" onSubmit={handleSaveAvailability} className="bbm-contact-form">
                   <h3 className="bbm-contact-subtitle" style={{ textAlign: 'center' }}>Availability</h3>
 
                   {availabilityState.status === 'loading' && <p className="bbm-contact-text" style={{ textAlign: 'center' }}>Loading…</p>}
                   {availabilityState.status === 'error' && <div className="bbm-form-error">{availabilityState.error}</div>}
 
                   <div
+                    data-bbm-tour="scheduler-top-controls"
                     style={{
                       display: 'grid',
                       gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
@@ -353,7 +621,7 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
 
                   <div>
                     <div className="bbm-contact-subtitle" style={{ marginTop: 8 }}>Weekly hours</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
+                    <div data-bbm-tour="scheduler-weekly-hours-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
                       {availabilityDraft.days.map((day, idx) => (
                         <div
                           key={idx}
@@ -528,6 +796,7 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
                   <button
                     className="bbm-form-submit"
                     type="submit"
+                    data-bbm-tour="scheduler-save-availability"
                     disabled={availabilityState.status === 'saving' || isAvailabilitySaved}
                   >
                     {availabilityState.status === 'saving' ? 'Saving…' : isAvailabilitySaved ? 'Saved' : 'Save availability'}
@@ -536,10 +805,10 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
 
                 <hr style={{ margin: '28px 0', border: 'none', borderTop: '1px solid rgba(247, 200, 115, 0.22)' }} />
 
-                <form onSubmit={handleCreateInvite} className="bbm-contact-form">
+                <form data-bbm-tour="scheduler-invite" onSubmit={handleCreateInvite} className="bbm-contact-form">
                   <h3 className="bbm-contact-subtitle" style={{ textAlign: 'center' }}>Guest invite link</h3>
 
-                  <div className="bbm-form-row bbm-form-row-3">
+                  <div data-bbm-tour="scheduler-invite-fields" className="bbm-form-row bbm-form-row-3">
                     <label className="bbm-form-label">
                       Guest name
                       <input
@@ -608,6 +877,84 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
           </div>
         )}
       </section>
+
+      {tour.active && activeStep && tourTargetRect ? (
+        <>
+          <div
+            className="bbm-tour-highlight bbm-tour-animate"
+            style={{
+              top: tourTargetRect.top,
+              left: tourTargetRect.left,
+              width: tourTargetRect.width,
+              height: tourTargetRect.height,
+              borderRadius: tourTargetRect.borderRadius,
+            }}
+          />
+
+          <div
+            ref={tourTooltipRef}
+            className="bbm-tour-tooltip bbm-tour-animate"
+            data-placement={tourPlacement}
+            style={{ top: tourTooltipPos.top, left: tourTooltipPos.left }}
+          >
+            <button
+              className="bbm-tour-close"
+              type="button"
+              onPointerDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                stopTour();
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                stopTour();
+              }}
+              aria-label="Close tour"
+            >
+              ×
+            </button>
+            <div className="bbm-tour-step">
+              Step {Math.min(activeTourSteps.length, tour.step + 1)} of {activeTourSteps.length}
+            </div>
+            <div className="bbm-tour-title">{activeStep.title}</div>
+            <div className="bbm-tour-body">{activeStep.body}</div>
+
+            <div className="bbm-tour-actions">
+              <button className="bbm-tour-btn" type="button" onClick={prevTourStep} disabled={tour.step === 0}>
+                Back
+              </button>
+              <button className="bbm-tour-btn bbm-tour-btn-primary" type="button" onClick={nextTourStep}>
+                {tour.step >= activeTourSteps.length - 1 ? 'Done' : 'Next'}
+              </button>
+            </div>
+
+            <span className="bbm-tour-arrow" aria-hidden="true" />
+          </div>
+        </>
+      ) : tour.active && activeStep ? (
+        <div className="bbm-tour-tooltip bbm-tour-animate" style={{ top: 80, left: 16 }}>
+          <button
+            className="bbm-tour-close"
+            type="button"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              stopTour();
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              stopTour();
+            }}
+            aria-label="Close tour"
+          >
+            ×
+          </button>
+          <div className="bbm-tour-title">{activeStep.title}</div>
+          <div className="bbm-tour-body">Scroll a bit — I’m looking for the next part of the page…</div>
+        </div>
+      ) : null}
     </Layout>
   );
 }

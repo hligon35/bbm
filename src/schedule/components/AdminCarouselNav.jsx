@@ -26,6 +26,7 @@ export default function AdminCarouselNav({ items, activeId, onChange }) {
               type="button"
               role="tab"
               aria-selected={isActive}
+              data-bbm-tour={`admin-tab-${item.id}`}
               onClick={() => onChange(item.id)}
               disabled={isActive}
               style={{

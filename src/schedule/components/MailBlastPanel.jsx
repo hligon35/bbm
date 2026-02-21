@@ -28,10 +28,6 @@ function parseEmailList(text) {
   return out;
 }
 
-function formatList(emails) {
-  return (Array.isArray(emails) ? emails : []).join('\n');
-}
-
 export default function MailBlastPanel({ sessionEmail }) {
   const apiBase = useMemo(() => getScheduleApiBase(), []);
 
@@ -236,112 +232,121 @@ export default function MailBlastPanel({ sessionEmail }) {
       </p>
 
       <form onSubmit={handleSaveSubscribers} className="bbm-contact-form" style={{ marginTop: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-          <h4 className="bbm-contact-subtitle" style={{ marginBottom: 0, fontSize: '1.1rem' }}>
-            Subscribers
-          </h4>
-
-          <div style={{ display: 'inline-flex', gap: 10, alignItems: 'center' }}>
-            <button
-              className="bbm-form-submit"
-              type="button"
-              onClick={handleSelectAll}
-              style={{ marginTop: 0, width: 'fit-content' }}
-              disabled={subscribersState.status === 'loading' || subscribers.length === 0}
-            >
-              Select all
-            </button>
-            <button
-              className="bbm-form-submit"
-              type="button"
-              onClick={handleSelectNone}
-              style={{ marginTop: 0, width: 'fit-content' }}
-              disabled={subscribersState.status === 'loading' || subscribers.length === 0}
-            >
-              Select none
-            </button>
-          </div>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, alignItems: 'end' }}>
-          <label className="bbm-form-label" style={{ margin: 0 }}>
-            Add address
-            <input
-              className="bbm-form-input"
-              value={addEmail}
-              onChange={(e) => setAddEmail(e.target.value)}
-              placeholder="person@example.com"
-              disabled={subscribersState.status === 'loading'}
-            />
-          </label>
-
-          <button
-            className="bbm-form-submit"
-            type="button"
-            onClick={handleAddSubscriber}
-            style={{ marginTop: 0, width: 'fit-content', alignSelf: 'end' }}
-            disabled={subscribersState.status === 'loading'}
-          >
-            Add
-          </button>
-        </div>
-
         <div
+          data-bbm-tour="mail-subscribers-manage"
           style={{
-            marginTop: 10,
-            border: '1px solid rgba(247, 200, 115, 0.22)',
-            borderRadius: 10,
-            padding: 10,
-            maxHeight: 240,
-            overflow: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem',
           }}
         >
-          {subscribers.length === 0 ? (
-            <div style={{ opacity: 0.85, fontSize: 14 }}>No subscribers yet.</div>
-          ) : (
-            subscribers.map((email) => (
-              <label
-                key={email}
-                className="bbm-form-label"
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 10,
-                  margin: 0,
-                  padding: '6px 4px',
-                }}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <h4 className="bbm-contact-subtitle" style={{ marginBottom: 0, fontSize: '1.1rem' }}>
+              Subscribers
+            </h4>
+
+            <div style={{ display: 'inline-flex', gap: 10, alignItems: 'center' }}>
+              <button
+                className="bbm-form-submit"
+                type="button"
+                onClick={handleSelectAll}
+                style={{ marginTop: 0, width: 'fit-content' }}
+                disabled={subscribersState.status === 'loading' || subscribers.length === 0}
               >
-                <input
-                  type="checkbox"
-                  checked={selected.has(email)}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
-                    setSelected((prev) => {
-                      const next = new Set(prev);
-                      if (checked) next.add(email);
-                      else next.delete(email);
-                      return next;
-                    });
-                  }}
-                />
-                <span
+                Select all
+              </button>
+              <button
+                className="bbm-form-submit"
+                type="button"
+                onClick={handleSelectNone}
+                style={{ marginTop: 0, width: 'fit-content' }}
+                disabled={subscribersState.status === 'loading' || subscribers.length === 0}
+              >
+                Select none
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, alignItems: 'end' }}>
+            <label className="bbm-form-label" style={{ margin: 0 }}>
+              Add address
+              <input
+                className="bbm-form-input"
+                value={addEmail}
+                onChange={(e) => setAddEmail(e.target.value)}
+                placeholder="person@example.com"
+                disabled={subscribersState.status === 'loading'}
+              />
+            </label>
+
+            <button
+              className="bbm-form-submit"
+              type="button"
+              onClick={handleAddSubscriber}
+              style={{ marginTop: 0, width: 'fit-content', alignSelf: 'end' }}
+              disabled={subscribersState.status === 'loading'}
+            >
+              Add
+            </button>
+          </div>
+
+          <div
+            style={{
+              marginTop: 10,
+              border: '1px solid rgba(247, 200, 115, 0.22)',
+              borderRadius: 10,
+              padding: 10,
+              maxHeight: 240,
+              overflow: 'auto',
+            }}
+          >
+            {subscribers.length === 0 ? (
+              <div style={{ opacity: 0.85, fontSize: 14 }}>No subscribers yet.</div>
+            ) : (
+              subscribers.map((email) => (
+                <label
+                  key={email}
+                  className="bbm-form-label"
                   style={{
-                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                    fontSize: 13,
-                    flex: 1,
-                    minWidth: 0,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10,
+                    margin: 0,
+                    padding: '6px 4px',
                   }}
                 >
-                  {email}
-                </span>
-                <span style={{ fontSize: 12, opacity: 0.7, textTransform: 'lowercase' }}>
-                  {String(labels?.[email] || 'subscriber')}
-                </span>
-              </label>
-            ))
-          )}
+                  <input
+                    type="checkbox"
+                    checked={selected.has(email)}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setSelected((prev) => {
+                        const next = new Set(prev);
+                        if (checked) next.add(email);
+                        else next.delete(email);
+                        return next;
+                      });
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                      fontSize: 13,
+                      flex: 1,
+                      minWidth: 0,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {email}
+                  </span>
+                  <span style={{ fontSize: 12, opacity: 0.7, textTransform: 'lowercase' }}>
+                    {String(labels?.[email] || 'subscriber')}
+                  </span>
+                </label>
+              ))
+            )}
+          </div>
         </div>
 
         {subscribersState.error ? <div className="bbm-form-error">{subscribersState.error}</div> : null}
@@ -373,29 +378,38 @@ export default function MailBlastPanel({ sessionEmail }) {
 
       <hr style={{ margin: '24px 0', border: 'none', borderTop: '1px solid rgba(247, 200, 115, 0.22)' }} />
 
-      <form onSubmit={handleSendCampaign} className="bbm-contact-form">
+      <form data-bbm-tour="mail-compose" onSubmit={handleSendCampaign} className="bbm-contact-form">
         <h4 className="bbm-contact-subtitle" style={{ marginBottom: 0, fontSize: '1.1rem' }}>
           Compose
         </h4>
 
-        <label className="bbm-form-label">
-          Subject
-          <input className="bbm-form-input" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Newsletter subject" />
-        </label>
+        <div
+          data-bbm-tour="mail-compose-fields"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem',
+          }}
+        >
+          <label className="bbm-form-label">
+            Subject
+            <input className="bbm-form-input" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Newsletter subject" />
+          </label>
 
-        <label className="bbm-form-label">
-          Message (plain text)
-          <textarea
-            className="bbm-form-textarea"
-            rows={10}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Write your update…"
-          />
-        </label>
+          <label className="bbm-form-label">
+            Message (plain text)
+            <textarea
+              className="bbm-form-textarea"
+              rows={10}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Write your update…"
+            />
+          </label>
+        </div>
 
         <div className="bbm-form-row">
-          <label className="bbm-form-label">
+          <label className="bbm-form-label" data-bbm-tour="mail-test-email">
             Test email
             <input
               className="bbm-form-input"
@@ -404,7 +418,10 @@ export default function MailBlastPanel({ sessionEmail }) {
               placeholder="you@gmail.com"
             />
           </label>
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: 10, alignSelf: 'end' }}>
+          <div
+            data-bbm-tour="mail-send-buttons"
+            style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: 10, alignSelf: 'end' }}
+          >
             <button
               className="bbm-form-submit"
               type="button"
