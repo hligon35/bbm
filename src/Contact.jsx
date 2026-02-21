@@ -170,6 +170,10 @@ export default function Contact() {
               <a href="mailto:info@blackbridgemindset.com">info@blackbridgemindset.com</a>{' '}
               or use the form.
             </p>
+
+            <div className="bbm-connect-logo" aria-hidden="true">
+              <img src={asset('images/bbmlogo.jpg')} alt="" loading="lazy" decoding="async" />
+            </div>
           </div>
         </div>
       </section>

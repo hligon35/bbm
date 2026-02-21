@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useMemo, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import './App.css';
 
 // Build correct public asset URLs respecting Vite base (no URL constructor)
@@ -10,9 +10,64 @@ const asset = (path) => {
 };
 
 export default function Layout({ children }) {
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const handleMenuToggle = () => setMenuOpen((open) => !open);
   const handleMenuClose = () => setMenuOpen(false);
+
+  const logoClickStateRef = useRef({ count: 0, firstAt: 0 });
+  const logoLongPressTimeoutRef = useRef(null);
+  const logoLongPressStartPosRef = useRef({ x: 0, y: 0 });
+
+  function goToAdminLogin() {
+    handleMenuClose();
+    navigate('/admin');
+  }
+
+  function handleLogoClick(e) {
+    const now = Date.now();
+    const state = logoClickStateRef.current;
+    if (!state.firstAt || now - state.firstAt > 3000) {
+      state.firstAt = now;
+      state.count = 0;
+    }
+
+    state.count += 1;
+
+    if (state.count >= 3) {
+      state.count = 0;
+      state.firstAt = 0;
+      if (e && typeof e.preventDefault === 'function') e.preventDefault();
+      if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+      goToAdminLogin();
+    }
+  }
+
+  function startLogoLongPress({ clientX = 0, clientY = 0 } = {}) {
+    if (logoLongPressTimeoutRef.current) return;
+    logoLongPressStartPosRef.current = { x: Number(clientX) || 0, y: Number(clientY) || 0 };
+    logoLongPressTimeoutRef.current = setTimeout(() => {
+      logoLongPressTimeoutRef.current = null;
+      goToAdminLogin();
+    }, 3000);
+  }
+
+  function clearLogoLongPress() {
+    if (!logoLongPressTimeoutRef.current) return;
+    clearTimeout(logoLongPressTimeoutRef.current);
+    logoLongPressTimeoutRef.current = null;
+  }
+
+  function maybeCancelLogoLongPress({ clientX = 0, clientY = 0 } = {}) {
+    if (!logoLongPressTimeoutRef.current) return;
+    const start = logoLongPressStartPosRef.current || { x: 0, y: 0 };
+    const dx = (Number(clientX) || 0) - (Number(start.x) || 0);
+    const dy = (Number(clientY) || 0) - (Number(start.y) || 0);
+    // Cancel if the finger/mouse moves more than ~10px.
+    if (dx * dx + dy * dy > 100) {
+      clearLogoLongPress();
+    }
+  }
 
   const newsletterEndpoint = useMemo(() => {
     return import.meta.env.VITE_NEWSLETTER_SUBSCRIBE_ENDPOINT || '/api/schedule/newsletter/subscribe';
@@ -69,7 +124,29 @@ export default function Layout({ children }) {
       <nav className="bbm-navbar">
         <div className="bbm-navbar-content">
           <div className="bbm-navbar-logo-group">
-            <img src={asset('images/bbmlogo.jpg')} alt="Black Bridge Mindset Logo" className="bbm-navbar-logo-img" />
+            <img
+              src={asset('images/bbmlogo.jpg')}
+              alt="Black Bridge Mindset Logo"
+              className="bbm-navbar-logo-img"
+              onClick={handleLogoClick}
+              onContextMenu={(e) => e.preventDefault()}
+              onPointerDown={(e) => startLogoLongPress({ clientX: e.clientX, clientY: e.clientY })}
+              onPointerMove={(e) => maybeCancelLogoLongPress({ clientX: e.clientX, clientY: e.clientY })}
+              onPointerUp={clearLogoLongPress}
+              onPointerCancel={clearLogoLongPress}
+              onPointerLeave={clearLogoLongPress}
+              onTouchStart={(e) => {
+                const t = e.touches && e.touches[0];
+                startLogoLongPress({ clientX: t?.clientX, clientY: t?.clientY });
+              }}
+              onTouchMove={(e) => {
+                const t = e.touches && e.touches[0];
+                maybeCancelLogoLongPress({ clientX: t?.clientX, clientY: t?.clientY });
+              }}
+              onTouchEnd={clearLogoLongPress}
+              onTouchCancel={clearLogoLongPress}
+              style={{ touchAction: 'manipulation' }}
+            />
             <Link to="/" className="bbm-navbar-logo-text" onClick={handleMenuClose}>Black Bridge Mindset</Link>
           </div>
           <div className="bbm-navbar-links">

@@ -1,3 +1,5 @@
+import { wrapBbmEmailHtml, renderBbmCodeBoxHtml } from '../../emailTheme';
+
 function jsonResponse(body, { status = 200, headers = {} } = {}) {
   return new Response(JSON.stringify(body), {
     status,
@@ -173,14 +175,15 @@ async function sendOtpEmail(env, { toEmail, code }) {
 
   const subject = 'Your Black Bridge Mindset admin login code';
   const text = `Your login code is: ${code}\n\nThis code expires in 10 minutes.`;
-  const html = `
-    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height: 1.5;">
-      <h2 style="margin: 0 0 12px 0;">Admin login code</h2>
-      <p style="margin: 0 0 12px 0;">Your code is:</p>
-      <div style="font-size: 28px; font-weight: 800; letter-spacing: 6px; padding: 12px 16px; background: #f6f6f6; border-radius: 10px; display: inline-block;">${code}</div>
-      <p style="margin: 12px 0 0 0; color: #555;">This code expires in 10 minutes.</p>
-    </div>
-  `;
+  const html = wrapBbmEmailHtml({
+    title: 'Admin login code',
+    preheader: 'Your admin login code is inside',
+    contentHtml: `
+      <p style="margin:0 0 12px 0;">Your code is:</p>
+      <div style="margin:0 0 12px 0;">${renderBbmCodeBoxHtml(String(code))}</div>
+      <p style="margin:0; color:#bdbdbd;">This code expires in 10 minutes.</p>
+    `,
+  });
 
   const payload = {
     personalizations: [{ to: [{ email: toEmail }] }],

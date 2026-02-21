@@ -1,4 +1,5 @@
 import { sendEmail } from '../../email';
+import { wrapBbmEmailHtml } from '../../emailTheme';
 
 function jsonResponse(body, { status = 200, headers = {} } = {}) {
   return new Response(JSON.stringify(body), {
@@ -75,14 +76,16 @@ function buildWelcomeEmail({ firstName }) {
 
   const text = `${greeting}\n\nThank you for subscribing to the Black Bridge Mindset Podcast. You’re officially part of a community committed to growth, resilience, and building the mindset that carries you across every bridge in life. I’m grateful you’re here. If you ever want to share your story, ask a question, or suggest a guest, just reply to this email. This platform grows stronger with every voice that joins it.\nWelcome to the bridge.\n\n— Mike, Host of Black Bridge Mindset`;
 
-  const html = `
-    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height: 1.55;">
-      <p style="margin: 0 0 12px 0;">${escapeHtml(greeting)}</p>
-      <p style="margin: 0 0 12px 0;">Thank you for subscribing to the Black Bridge Mindset Podcast. You’re officially part of a community committed to growth, resilience, and building the mindset that carries you across every bridge in life. I’m grateful you’re here. If you ever want to share your story, ask a question, or suggest a guest, just reply to this email. This platform grows stronger with every voice that joins it.</p>
-      <p style="margin: 0 0 12px 0;">Welcome to the bridge.</p>
-      <p style="margin: 0;">— Mike, Host of Black Bridge Mindset</p>
-    </div>
-  `;
+  const html = wrapBbmEmailHtml({
+    title: subject,
+    preheader: 'Welcome to the Black Bridge Mindset community',
+    contentHtml: `
+      <p style="margin:0 0 12px 0;">${escapeHtml(greeting)}</p>
+      <p style="margin:0 0 12px 0;">Thank you for subscribing to the Black Bridge Mindset Podcast. You’re officially part of a community committed to growth, resilience, and building the mindset that carries you across every bridge in life. I’m grateful you’re here. If you ever want to share your story, ask a question, or suggest a guest, just reply to this email. This platform grows stronger with every voice that joins it.</p>
+      <p style="margin:0 0 12px 0;">Welcome to the bridge.</p>
+      <p style="margin:0;">— Mike, Host of Black Bridge Mindset</p>
+    `,
+  });
 
   return { subject, text, html };
 }

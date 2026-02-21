@@ -1,4 +1,5 @@
 import { sendEmail } from '../../email';
+import { wrapBbmEmailHtml, renderBbmCodeBoxHtml } from '../../emailTheme';
 
 function escapeHtml(value) {
   return String(value)
@@ -179,15 +180,17 @@ async function sendOtpEmail(env, { toEmail, code }) {
   const subject = 'Your Black Bridge Mindset admin login code';
   const text = `Hi,\n\nHere is your Black Bridge Mindset admin login code:\n\n${code}\n\nThis code expires in 10 minutes. If you didn’t request this code, you can ignore this email.\n\n— Mike`;
 
-  const html = `
-    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height: 1.55;">
-      <p style="margin: 0 0 12px 0;">Hi,</p>
-      <p style="margin: 0 0 12px 0;">Here is your Black Bridge Mindset admin login code:</p>
-      <div style="font-size: 24px; font-weight: 700; letter-spacing: 2px; margin: 0 0 12px 0;">${escapeHtml(code)}</div>
-      <p style="margin: 0 0 12px 0; opacity: 0.85;">This code expires in 10 minutes. If you didn’t request this code, you can ignore this email.</p>
-      <p style="margin: 0;">— Mike</p>
-    </div>
-  `;
+  const html = wrapBbmEmailHtml({
+    title: 'Admin login code',
+    preheader: 'Your admin login code is inside',
+    contentHtml: `
+      <p style="margin:0 0 12px 0;">Hi,</p>
+      <p style="margin:0 0 12px 0;">Here is your Black Bridge Mindset admin login code:</p>
+      <div style="margin:0 0 12px 0;">${renderBbmCodeBoxHtml(escapeHtml(code))}</div>
+      <p style="margin:0 0 12px 0; color:#bdbdbd;">This code expires in 10 minutes. If you didn’t request this code, you can ignore this email.</p>
+      <p style="margin:0;">— Mike</p>
+    `,
+  });
 
   await sendEmail(env, {
     to: toEmail,

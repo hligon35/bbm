@@ -1,5 +1,6 @@
 import { verifyAdminSession } from './auth';
 import { sendEmail } from '../../email';
+import { wrapBbmEmailHtml, bbmLinkStyle, renderBbmButtonHtml, renderBbmMessageBoxHtml } from '../../emailTheme';
 
 function jsonResponse(body, { status = 200, headers = {} } = {}) {
   return new Response(JSON.stringify(body), {
@@ -183,13 +184,19 @@ function buildNewsletterEmail({ subject, message }) {
   const cleanMessage = String(message || '').trim();
 
   const text = cleanMessage;
-  const html = `
-    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height: 1.55;">
-      <h2 style="margin: 0 0 12px 0;">${escapeHtml(cleanSubject)}</h2>
-      <div style="margin: 0; white-space: pre-wrap;">${escapeHtml(cleanMessage)}</div>
-      <p style="margin: 16px 0 0 0;">— Mike</p>
-    </div>
-  `;
+
+  const messageBox = renderBbmMessageBoxHtml(
+    `<div style="margin:0; white-space:pre-wrap; color:#e0e0e0;">${escapeHtml(cleanMessage)}</div>`
+  );
+
+  const html = wrapBbmEmailHtml({
+    title: cleanSubject,
+    preheader: 'New message from Black Bridge Mindset',
+    contentHtml: `
+      ${messageBox}
+      <p style="margin:14px 0 0 0;">— Mike</p>
+    `,
+  });
 
   return { subject: cleanSubject, text, html };
 }
@@ -324,18 +331,25 @@ function buildInviteEmail({ guestName, inviteUrl, expiresAt }) {
 
   const text = `${greeting}\n\nWe here at Black Bridge Mindset Podcast are excited to have you join us on the show. Your story and perspective will bring real value to the community, and we're looking forward to our conversation.\nTo make scheduling easy, we've set aside recording times based on our current availability. Please choose the time that works best for you using the link below:\n\nSchedule your recording:\n${url}\n\nOnce you select a time, you’ll receive a confirmation email. If you have any questions or need a different time, feel free to reply directly. We want this experience to be smooth and enjoyable for you. Looking forward to our conversation.\n\n— Mike${expiresText ? `\n\n(Link expires on ${expiresText})` : ''}`;
 
-  const html = `
-    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height: 1.55;">
-      <p style="margin: 0 0 12px 0;">${escapeHtml(greeting)}</p>
-      <p style="margin: 0 0 12px 0;">We here at Black Bridge Mindset Podcast are excited to have you join us on the show. Your story and perspective will bring real value to the community, and we're looking forward to our conversation.</p>
-      <p style="margin: 0 0 12px 0;">To make scheduling easy, we've set aside recording times based on our current availability. Please choose the time that works best for you using the link below:</p>
-      <p style="margin: 0 0 12px 0; font-weight: 600;">Schedule your recording:</p>
-      <p style="margin: 0 0 12px 0;"><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(url)}</a></p>
-      <p style="margin: 0 0 12px 0;">Once you select a time, you’ll receive a confirmation email. If you have any questions or need a different time, feel free to reply directly. We want this experience to be smooth and enjoyable for you. Looking forward to our conversation.</p>
-      <p style="margin: 0;">— Mike</p>
-      ${expiresText ? `<p style="margin: 8px 0 0 0; opacity: 0.85; font-size: 12px;">(Link expires on ${escapeHtml(expiresText)})</p>` : ''}
-    </div>
-  `;
+  const ctaButton = renderBbmButtonHtml({
+    hrefEscaped: escapeHtml(url),
+    labelEscaped: 'Schedule your recording',
+  });
+
+  const html = wrapBbmEmailHtml({
+    title: subject,
+    preheader: 'Choose a time for your recording',
+    contentHtml: `
+      <p style="margin:0 0 12px 0;">${escapeHtml(greeting)}</p>
+      <p style="margin:0 0 12px 0;">We here at Black Bridge Mindset Podcast are excited to have you join us on the show. Your story and perspective will bring real value to the community, and we're looking forward to our conversation.</p>
+      <p style="margin:0 0 12px 0;">To make scheduling easy, we've set aside recording times based on our current availability. Please choose the time that works best for you using the link below:</p>
+      <div style="margin:0 0 12px 0;">${ctaButton}</div>
+      <p style="margin:0 0 12px 0; ${bbmLinkStyle()}"><a style="${bbmLinkStyle()}" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(url)}</a></p>
+      <p style="margin:0 0 12px 0;">Once you select a time, you’ll receive a confirmation email. If you have any questions or need a different time, feel free to reply directly. We want this experience to be smooth and enjoyable for you. Looking forward to our conversation.</p>
+      <p style="margin:0;">— Mike</p>
+      ${expiresText ? `<p style="margin:10px 0 0 0; color:#bdbdbd; font-size:12px;">(Link expires on ${escapeHtml(expiresText)})</p>` : ''}
+    `,
+  });
 
   return { subject, text, html };
 }

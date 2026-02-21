@@ -2,6 +2,7 @@ import { validateScheduleToken } from './validate';
 import { computeAvailableSlots, isDatetimeInSlots } from './availability';
 import { getAvailabilityConfig } from './config';
 import { sendEmail } from '../../email';
+import { wrapBbmEmailHtml, bbmLinkStyle, renderBbmButtonHtml } from '../../emailTheme';
 
 function jsonResponse(body, { status = 200, headers = {} } = {}) {
   return new Response(JSON.stringify(body), {
@@ -85,7 +86,7 @@ function sanitizeTimeZone(value) {
   if (!tz) return '';
   if (tz.length > 64) return '';
   // Very loose allowlist: IANA-like strings (e.g. America/Chicago) and common safe characters.
-  if (!/^[A-Za-z0-9_+\-\/]+$/.test(tz)) return '';
+  if (!/^[A-Za-z0-9_+\-/]+$/.test(tz)) return '';
   return tz;
 }
 
@@ -99,14 +100,16 @@ function buildIcsLink({ siteOrigin, bookingId, token, durationMinutes }) {
   return url.toString();
 }
 
-function buildBookingNotificationEmail({ booking, invite, timeLabel, timeZone, googleCalendarUrl, icsUrl }) {
+function buildBookingNotificationEmail({ booking, invite: _invite, timeLabel, timeZone, googleCalendarUrl, icsUrl }) {
   const subject = 'New BBM Podcast Recording Scheduled';
+
+  void _invite;
+  void timeZone;
 
   const guestName = String(booking?.name || '').trim();
   const guestEmail = String(booking?.email || '').trim();
   const guestNotes = String(booking?.notes || '').trim();
   const bookingId = String(booking?.id || '').trim();
-  const tz = String(timeZone || '').trim() || 'America/Chicago';
 
   const text =
     `New scheduled booking confirmed.\n\n` +
@@ -118,35 +121,56 @@ function buildBookingNotificationEmail({ booking, invite, timeLabel, timeZone, g
     (guestNotes ? `Notes: ${guestNotes}\n\n` : '\n') +
     (bookingId ? `Booking reference: ${bookingId}\n` : '');
 
-  const html = `
-    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height: 1.55;">
-      <h2 style="margin: 0 0 12px 0;">New scheduled booking confirmed</h2>
+  const calendarButton = googleCalendarUrl
+    ? renderBbmButtonHtml({ hrefEscaped: escapeHtml(googleCalendarUrl), labelEscaped: 'Add to Google Calendar' })
+    : '';
 
-      <p style="margin: 0 0 10px 0;"><b>Scheduled time:</b> ${escapeHtml(timeLabel)}</p>
+  const icsButton = icsUrl
+    ? renderBbmButtonHtml({ hrefEscaped: escapeHtml(icsUrl), labelEscaped: 'Download iCal (.ics)' })
+    : '';
+
+  const html = wrapBbmEmailHtml({
+    title: 'New scheduled booking confirmed',
+    preheader: 'A new recording time has been booked',
+    contentHtml: `
+      <p style="margin:0 0 10px 0;"><b>Scheduled time:</b> ${escapeHtml(timeLabel)}</p>
+
+      ${
+        calendarButton || icsButton
+          ? `<div style="margin:0 0 14px 0;">
+              ${calendarButton}
+              ${icsButton ? `<div style="margin-top:10px;">${icsButton}</div>` : ''}
+            </div>`
+          : ''
+      }
 
       ${
         googleCalendarUrl || icsUrl
-          ? `<p style="margin: 0 0 18px 0;">
-              ${googleCalendarUrl ? `<a href="${escapeHtml(googleCalendarUrl)}" target="_blank" rel="noopener noreferrer">Add to Google Calendar</a>` : ''}
+          ? `<p style="margin:0 0 18px 0;">
+              ${
+                googleCalendarUrl
+                  ? `<a style="${bbmLinkStyle()}" href="${escapeHtml(googleCalendarUrl)}" target="_blank" rel="noopener noreferrer">Add to Google Calendar</a>`
+                  : ''
+              }
               ${googleCalendarUrl && icsUrl ? ' &nbsp;|&nbsp; ' : ''}
-              ${icsUrl ? `<a href="${escapeHtml(icsUrl)}" target="_blank" rel="noopener noreferrer">Download iCal (.ics)</a>` : ''}
+              ${
+                icsUrl
+                  ? `<a style="${bbmLinkStyle()}" href="${escapeHtml(icsUrl)}" target="_blank" rel="noopener noreferrer">Download iCal (.ics)</a>`
+                  : ''
+              }
             </p>`
           : ''
       }
 
-      <h3 style="margin: 0 0 10px 0; font-size: 16px;">Guest (form)</h3>
-      <p style="margin: 0 0 6px 0;"><b>Name:</b> ${escapeHtml(guestName)}</p>
-      <p style="margin: 0 0 14px 0;"><b>Email:</b> ${escapeHtml(guestEmail)}</p>
+      <h3 style="margin:0 0 10px 0; font-size:16px;">Guest (form)</h3>
+      <p style="margin:0 0 6px 0;"><b>Name:</b> ${escapeHtml(guestName)}</p>
+      <p style="margin:0 0 14px 0;"><b>Email:</b> ${escapeHtml(guestEmail)}</p>
 
-      ${guestNotes ? `<p style="margin: 0 0 18px 0;"><b>Notes:</b><br />${escapeHtml(guestNotes).replaceAll('\n', '<br />')}</p>` : ''}
+      ${guestNotes ? `<p style="margin:0 0 18px 0;"><b>Notes:</b><br />${escapeHtml(guestNotes).replaceAll('\n', '<br />')}</p>` : ''}
 
-      ${
-        bookingId
-          ? `<p style="margin: 18px 0 0 0; font-size: 12px; opacity: 0.65;">Booking reference: ${escapeHtml(bookingId)}</p>`
-          : ''
-      }
-    </div>
-  `;
+      ${bookingId ? `<p style="margin:18px 0 0 0; font-size:12px; color:#bdbdbd;">Booking reference: ${escapeHtml(bookingId)}</p>` : ''}
+    `,
+  });
 
   return { subject, text, html };
 }
@@ -154,9 +178,10 @@ function buildBookingNotificationEmail({ booking, invite, timeLabel, timeZone, g
 function buildGuestConfirmationEmail({ booking, timeLabel, timeZone, googleCalendarUrl, icsUrl }) {
   const subject = 'Your BBM Podcast Guest Recording Is Confirmed';
 
+  void timeZone;
+
   const guestName = String(booking?.name || '').trim();
   const guestNotes = String(booking?.notes || '').trim();
-  const tz = String(timeZone || '').trim() || 'America/Chicago';
 
   const greeting = guestName ? `Hi ${guestName},` : 'Hi,';
 
@@ -170,29 +195,56 @@ function buildGuestConfirmationEmail({ booking, timeLabel, timeZone, googleCalen
     `If you have any questions or need to reschedule, just reply to this email.\n\n` +
     `— Black Bridge Mindset`;
 
-  const html = `
-    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height: 1.55;">
-      <p style="margin: 0 0 12px 0;">${escapeHtml(greeting)}</p>
-      <p style="margin: 0 0 12px 0;">You're confirmed for your <b>Black Bridge Mindset Podcast</b> guest recording.</p>
+  const calendarButton = googleCalendarUrl
+    ? renderBbmButtonHtml({ hrefEscaped: escapeHtml(googleCalendarUrl), labelEscaped: 'Add to Google Calendar' })
+    : '';
 
-      <p style="margin: 0 0 8px 0;"><b>Scheduled time:</b> ${escapeHtml(timeLabel)}</p>
+  const icsButton = icsUrl
+    ? renderBbmButtonHtml({ hrefEscaped: escapeHtml(icsUrl), labelEscaped: 'Download iCal (.ics)' })
+    : '';
+
+  const html = wrapBbmEmailHtml({
+    title: subject,
+    preheader: 'Your guest recording is confirmed',
+    contentHtml: `
+      <p style="margin:0 0 12px 0;">${escapeHtml(greeting)}</p>
+      <p style="margin:0 0 12px 0;">You're confirmed for your <b>Black Bridge Mindset Podcast</b> guest recording.</p>
+
+      <p style="margin:0 0 8px 0;"><b>Scheduled time:</b> ${escapeHtml(timeLabel)}</p>
+
+      ${
+        calendarButton || icsButton
+          ? `<div style="margin:0 0 14px 0;">
+              ${calendarButton}
+              ${icsButton ? `<div style="margin-top:10px;">${icsButton}</div>` : ''}
+            </div>`
+          : ''
+      }
 
       ${
         googleCalendarUrl || icsUrl
-          ? `<p style="margin: 0 0 18px 0;">
-              ${googleCalendarUrl ? `<a href="${escapeHtml(googleCalendarUrl)}" target="_blank" rel="noopener noreferrer">Add to Google Calendar</a>` : ''}
+          ? `<p style="margin:0 0 18px 0;">
+              ${
+                googleCalendarUrl
+                  ? `<a style="${bbmLinkStyle()}" href="${escapeHtml(googleCalendarUrl)}" target="_blank" rel="noopener noreferrer">Add to Google Calendar</a>`
+                  : ''
+              }
               ${googleCalendarUrl && icsUrl ? ' &nbsp;|&nbsp; ' : ''}
-              ${icsUrl ? `<a href="${escapeHtml(icsUrl)}" target="_blank" rel="noopener noreferrer">Download iCal (.ics)</a>` : ''}
+              ${
+                icsUrl
+                  ? `<a style="${bbmLinkStyle()}" href="${escapeHtml(icsUrl)}" target="_blank" rel="noopener noreferrer">Download iCal (.ics)</a>`
+                  : ''
+              }
             </p>`
           : ''
       }
 
-      ${guestNotes ? `<p style="margin: 0 0 18px 0;"><b>Notes you submitted:</b><br />${escapeHtml(guestNotes).replaceAll('\n', '<br />')}</p>` : ''}
+      ${guestNotes ? `<p style="margin:0 0 18px 0;"><b>Notes you submitted:</b><br />${escapeHtml(guestNotes).replaceAll('\n', '<br />')}</p>` : ''}
 
-      <p style="margin: 0;">If you have any questions or need to reschedule, just reply to this email.</p>
-      <p style="margin: 16px 0 0 0;">— Black Bridge Mindset</p>
-    </div>
-  `;
+      <p style="margin:0;">If you have any questions or need to reschedule, just reply to this email.</p>
+      <p style="margin:16px 0 0 0;">— Black Bridge Mindset</p>
+    `,
+  });
 
   return { subject, text, html };
 }

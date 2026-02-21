@@ -1,5 +1,6 @@
 import { handleScheduleRequest } from './api/schedule';
 import { sendEmail } from './email';
+import { wrapBbmEmailHtml, renderBbmMessageBoxHtml, bbmMutedTextStyle } from './emailTheme';
 
 function securityHeaders() {
   return {
@@ -79,21 +80,25 @@ function buildEmail({ name, email, subject, message, ip, ua, origin }) {
     `IP: ${ip || ''}\n` +
     `User-Agent: ${ua || ''}\n`;
 
-  const html = `
-    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height: 1.5;">
-      <h2 style="margin: 0 0 12px 0;">New contact form submission</h2>
-      <p style="margin: 0 0 8px 0;"><b>Name:</b> ${escapeHtml(name)}</p>
-      <p style="margin: 0 0 8px 0;"><b>Email:</b> ${escapeHtml(email)}</p>
-      <p style="margin: 0 0 16px 0;"><b>Subject:</b> ${escapeHtml(cleanSubject)}</p>
-      <div style="padding: 12px 14px; background: #f6f6f6; border-radius: 8px;">
-        <pre style="margin: 0; white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">${escapeHtml(message)}</pre>
+  const messageBox = renderBbmMessageBoxHtml(
+    `<pre style="margin:0; white-space:pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; color:#e0e0e0;">${escapeHtml(message)}</pre>`
+  );
+
+  const html = wrapBbmEmailHtml({
+    title: 'New contact form submission',
+    preheader: `From ${String(name || '').trim()} (${String(email || '').trim()})`,
+    contentHtml: `
+      <p style="margin:0 0 8px 0;"><b>Name:</b> ${escapeHtml(name)}</p>
+      <p style="margin:0 0 8px 0;"><b>Email:</b> ${escapeHtml(email)}</p>
+      <p style="margin:0 0 14px 0;"><b>Subject:</b> ${escapeHtml(cleanSubject)}</p>
+      ${messageBox}
+      <div style="margin-top:14px; ${bbmMutedTextStyle()}">
+        <div><b>Origin:</b> ${escapeHtml(origin || '')}</div>
+        <div><b>IP:</b> ${escapeHtml(ip || '')}</div>
+        <div><b>User-Agent:</b> ${escapeHtml(ua || '')}</div>
       </div>
-      <hr style="margin: 16px 0; border: none; border-top: 1px solid #e5e5e5;" />
-      <p style="margin: 0; color: #555;"><b>Origin:</b> ${escapeHtml(origin || '')}</p>
-      <p style="margin: 0; color: #555;"><b>IP:</b> ${escapeHtml(ip || '')}</p>
-      <p style="margin: 0; color: #555;"><b>User-Agent:</b> ${escapeHtml(ua || '')}</p>
-    </div>
-  `;
+    `,
+  });
 
   return { subject: `[BBM Contact] ${cleanSubject}`, text, html };
 }

@@ -136,8 +136,9 @@
     max-width: 100%;
   }
   .bbm-social-img {
-    width: 28px;
+    width: auto;
     height: 28px;
+    max-width: 44px;
   }
   .bbm-footer {
     font-size: 0.85rem;
@@ -358,8 +359,9 @@ body, .bbm-root {
   overflow-wrap: anywhere;
 }
 .bbm-social-img {
-  width: 40px;
+  width: auto;
   height: 40px;
+  max-width: 64px;
   object-fit: contain;
   border-radius: 15px;
   background: #ffffff00;
@@ -826,8 +828,8 @@ html, body, .bbm-root {
 }
 
 .bbm-hero-hosts .bbm-avatar {
-  width: 92px;
-  height: 92px;
+  width: 150px;
+  height: 150px;
   margin-bottom: 0;
   border: 3px solid var(--bbm-accent);
   background: #fff;
@@ -1011,6 +1013,25 @@ html, body, .bbm-root {
   align-items: start;
   max-width: 900px;
   margin: 0 auto;
+}
+
+.bbm-contact-info .bbm-contact-subtitle {
+  text-align: center;
+}
+
+.bbm-connect-logo {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.25rem;
+}
+
+.bbm-connect~-logo img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--bbm-accent);
+  background: #fff;
 }
 .bbm-contact-subtitle {
   margin: 0 0 1rem 0;
