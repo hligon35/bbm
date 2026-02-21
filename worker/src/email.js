@@ -1,7 +1,33 @@
+import { wrapBbmEmailHtml, renderBbmMessageBoxHtml } from './emailTheme';
+
 function assertString(name, value) {
   const v = String(value || '').trim();
   if (!v) throw new Error(`${name} not configured`);
   return v;
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function defaultThemedHtml({ subject, text }) {
+  const cleanSubject = String(subject || '').trim();
+  const cleanText = String(text || '').trim();
+
+  const contentHtml = renderBbmMessageBoxHtml(
+    `<pre style="margin:0; white-space:pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; color:#e0e0e0;">${escapeHtml(cleanText)}</pre>`
+  );
+
+  return wrapBbmEmailHtml({
+    title: cleanSubject || 'Message',
+    preheader: cleanSubject || '',
+    contentHtml,
+  });
 }
 
 function toArray(value) {
@@ -22,19 +48,21 @@ function makePayload({ to, fromEmail, fromName, subject, text, html, replyTo }) 
 
   const personalizations = recipients.map((r) => ({ to: [r] }));
 
+  const cleanSubject = assertString('subject', subject);
+  const cleanText = String(text || '');
+  const themedHtml = String(html || '').trim() ? String(html) : defaultThemedHtml({ subject: cleanSubject, text: cleanText });
+
   const payload = {
     personalizations,
     from: {
       email: assertString('EMAIL_FROM', fromEmail),
       name: String(fromName || '').trim() || undefined,
     },
-    subject: assertString('subject', subject),
-    content: [{ type: 'text/plain', value: String(text || '') }],
+    subject: cleanSubject,
+    content: [{ type: 'text/plain', value: cleanText }],
   };
 
-  if (html) {
-    payload.content.push({ type: 'text/html', value: String(html) });
-  }
+  payload.content.push({ type: 'text/html', value: themedHtml });
 
   if (replyTo) {
     payload.reply_to = { email: normalizeEmail(replyTo) };
