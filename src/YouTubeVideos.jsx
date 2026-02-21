@@ -4,6 +4,10 @@ const CHANNEL_ID = 'UCzaxkVQzZ-okUD461Bif6PQ';
 const CHANNEL_URL = 'https://www.youtube.com/channel/UCzaxkVQzZ-okUD461Bif6PQ';
 const CHANNEL_HANDLE_URL = 'https://www.youtube.com/@BlackBridgeMindset';
 
+// Optional client-side key (bundled into the build). Prefer using the Worker endpoint
+// (/api/schedule/youtube/uploads) so the key can live server-side.
+//
+// If you do use a client key, restrict it heavily in Google Cloud Console.
 // Set in `.env` / hosting env vars:
 //   VITE_YOUTUBE_API_KEY=... (YouTube Data API v3)
 const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY || '';
@@ -65,6 +69,39 @@ async function getUploadVideos({ apiKey, uploadsPlaylistId, limit }) {
   return all;
 }
 
+function getScheduleApiBase() {
+  const explicit = String(import.meta.env.VITE_SCHEDULE_API_BASE || '').trim();
+  if (!explicit) return '';
+  return explicit.replace(/\/$/, '');
+}
+
+async function fetchUploadsViaWorker({ limit }) {
+  const base = getScheduleApiBase();
+  const endpoint = `${base}/api/schedule/youtube/uploads`;
+
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ limit }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data?.ok) {
+    const msg = data?.error || `Request failed (${res.status}).`;
+    throw new Error(msg);
+  }
+
+  const list = Array.isArray(data?.videos) ? data.videos : [];
+  return list
+    .filter((v) => v && typeof v === 'object' && v.videoId && v.title)
+    .map((v) => ({
+      videoId: String(v.videoId),
+      title: String(v.title),
+      publishedAt: String(v.publishedAt || ''),
+      url: `https://www.youtube.com/watch?v=${encodeURIComponent(String(v.videoId))}`,
+    }));
+}
+
 export default function YouTubeVideos({
   variant = 'grid',
   limit,
@@ -82,7 +119,6 @@ export default function YouTubeVideos({
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const showApiList = Boolean(API_KEY);
   const playlistEmbedUrl = useMemo(
     () => `https://www.youtube.com/embed?listType=playlist&list=${UPLOADS_PLAYLIST_ID}`,
     []
@@ -168,12 +204,32 @@ export default function YouTubeVideos({
   }, [autoScroll, autoScrollPaused, autoScrollThreshold, list.length, status, variant]);
 
   useEffect(() => {
-    if (!API_KEY) return;
-
     let cancelled = false;
+
     const run = async () => {
       setStatus('loading');
       setError('');
+
+      // Prefer same-origin Worker endpoint (keeps API key off the client bundle).
+      try {
+        const workerVideos = await fetchUploadsViaWorker({ limit });
+        if (cancelled) return;
+        if (workerVideos.length > 0) {
+          setVideos(workerVideos);
+          setStatus('ready');
+          return;
+        }
+      } catch (e) {
+        // Ignore and fall back to client-side API key if configured.
+      }
+
+      if (!API_KEY) {
+        if (cancelled) return;
+        setStatus('error');
+        setError('YouTube list unavailable (missing API configuration).');
+        return;
+      }
+
       try {
         const uploadsPlaylistId = await getUploadsPlaylistId({ apiKey: API_KEY, channelId: CHANNEL_ID });
         const allVideos = await getUploadVideos({ apiKey: API_KEY, uploadsPlaylistId, limit });
@@ -191,11 +247,10 @@ export default function YouTubeVideos({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [limit]);
 
-  // No API key: YouTube API (and RSS feed) can’t be fetched reliably due to browser CORS.
-  // The playlist embed still shows the full uploads playlist.
-  if (!showApiList) {
+  // If we can't load a structured list (Worker + client API), fall back to the playlist embed.
+  if (status === 'error') {
     return (
       <div style={{ textAlign: 'center', margin: '2rem 0' }}>
         <iframe
@@ -208,6 +263,7 @@ export default function YouTubeVideos({
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
         ></iframe>
+        {error ? <div style={{ marginTop: '0.75rem', color: '#e0e0e0', fontSize: 13 }}>{error}</div> : null}
         <div style={{ marginTop: '1rem' }}>
           <a
             href={CHANNEL_HANDLE_URL}
@@ -222,7 +278,6 @@ export default function YouTubeVideos({
     );
   }
 
-  if (status === 'error') return <div style={{ color: 'red' }}>{error || 'Failed to fetch videos.'}</div>;
   if (status !== 'ready') return <div>Loading videos...</div>;
 
   const embedClassName = variant === 'row' ? 'bbm-videos-embeds bbm-videos-embeds--row' : 'bbm-videos-embeds';

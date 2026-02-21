@@ -25,6 +25,12 @@ FROM_NAME = "Black Bridge Mindset"
 # This worker sends using SendGrid when SENDGRID_API_KEY is configured as a secret.
 # It will fall back to MailChannels if no SendGrid key is present.
 
+# YouTube (Episodes + Home video list)
+# -------------------------------
+# Prefer keeping the YouTube Data API key server-side.
+# Set as a secret:
+#   wrangler secret put YOUTUBE_API_KEY --cwd worker
+
 # Comma-separated allowlist of origins for CORS. Example:
 # ALLOWED_ORIGINS = "https://blackbridgemindset.com,https://www.blackbridgemindset.com"
 ALLOWED_ORIGINS = "https://blackbridgemindset.com,https://www.blackbridgemindset.com"

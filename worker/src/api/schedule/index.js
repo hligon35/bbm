@@ -5,6 +5,7 @@ import { handleAdmin } from './admin';
 import { handleAdminAuth } from './auth';
 import { handleNewsletterSubscribe } from './newsletter';
 import { handleBookingIcs } from './ics';
+import { handleYouTubeUploads } from './youtube';
 
 function securityHeaders() {
   return {
@@ -111,6 +112,10 @@ export async function handleScheduleRequest(request, env) {
 
   if (url.pathname === '/api/schedule/newsletter/subscribe') {
     return handleNewsletterSubscribe(request, env, cors);
+  }
+
+  if (url.pathname === '/api/schedule/youtube/uploads') {
+    return handleYouTubeUploads(request, env, cors);
   }
 
   if (url.pathname.startsWith('/api/schedule/admin/')) {
