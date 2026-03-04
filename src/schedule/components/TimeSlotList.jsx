@@ -85,13 +85,14 @@ export default function TimeSlotList({ slots, selectedSlot, onSelect }) {
                     textAlign: 'left',
                     padding: 12,
                     borderRadius: 10,
-                    border: isSelected ? '2px solid #111' : '1px solid #ddd',
-                    background: isSelected ? '#f2f2f2' : '#fff',
+                    border: isSelected ? '2px solid var(--vscode-focusBorder, #111)' : '1px solid var(--vscode-widget-border, #ddd)',
+                    background: isSelected ? 'var(--vscode-list-hoverBackground, #f2f2f2)' : 'var(--vscode-editor-background, #fff)',
+                    color: 'var(--vscode-foreground, #000)',
                     cursor: 'pointer',
                   }}
                 >
-                  <div style={{ fontWeight: 600 }}>{title}</div>
-                  <div style={{ opacity: 0.75, marginTop: 4 }}>{slot.durationMinutes} minutes</div>
+                  <div style={{ fontWeight: 600, color: 'inherit' }}>{title}</div>
+                  <div style={{ opacity: 0.75, marginTop: 4, color: 'inherit' }}>{slot.durationMinutes} minutes</div>
                 </button>
               );
             })}

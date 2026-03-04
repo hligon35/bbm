@@ -12,8 +12,10 @@ CREATE TABLE IF NOT EXISTS bookings (
   email TEXT NOT NULL,
   datetime TEXT NOT NULL,
   notes TEXT,
-  createdAt INTEGER NOT NULL
+  createdAt INTEGER NOT NULL,
+  status TEXT DEFAULT 'confirmed'
 );
 
 CREATE INDEX IF NOT EXISTS idx_bookings_datetime ON bookings(datetime);
 CREATE INDEX IF NOT EXISTS idx_bookings_email ON bookings(email);
+CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);

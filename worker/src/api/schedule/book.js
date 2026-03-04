@@ -285,7 +285,7 @@ async function writeBooking(env, booking) {
     try {
       await env.SCHEDULE_DB
         .prepare(
-          'INSERT INTO bookings (id, token, name, email, datetime, notes, createdAt) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)'
+          'INSERT INTO bookings (id, token, name, email, datetime, notes, createdAt, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)'
         )
         .bind(
           booking.id,
@@ -294,7 +294,8 @@ async function writeBooking(env, booking) {
           booking.email,
           booking.datetime,
           booking.notes || '',
-          booking.createdAt
+          booking.createdAt,
+          'confirmed'
         )
         .run();
 
@@ -422,6 +423,26 @@ export async function handleBook(request, env, corsHeaders) {
       { ok: false, error: 'Requested time is not available' },
       { status: 400, headers: corsHeaders }
     );
+  }
+
+  // Check if this time slot is already booked (prevent double-booking)
+  if (env.SCHEDULE_DB) {
+    try {
+      const existing = await env.SCHEDULE_DB
+        .prepare('SELECT id FROM bookings WHERE datetime = ?1 AND (status = ?2 OR status IS NULL)')
+        .bind(datetime, 'confirmed')
+        .first();
+      
+      if (existing) {
+        return jsonResponse(
+          { ok: false, error: 'This time slot has already been booked' },
+          { status: 409, headers: corsHeaders }
+        );
+      }
+    } catch (e) {
+      console.error('Failed to check for existing booking', e);
+      // Continue with booking - fail open in case of DB issues
+    }
   }
 
   const booking = {

@@ -632,5 +632,55 @@ export async function handleAdmin(request, env, corsHeaders) {
     }
   }
 
+  if (url.pathname === '/api/schedule/admin/booking/cancel') {
+    const bookingId = String(body?.bookingId || '').trim();
+    if (!bookingId) {
+      return jsonResponse({ ok: false, error: 'Booking ID is required' }, { status: 400, headers: corsHeaders });
+    }
+
+    if (!env.SCHEDULE_DB) {
+      return jsonResponse({ ok: false, error: 'Booking database not configured' }, { status: 501, headers: corsHeaders });
+    }
+
+    try {
+      const result = await env.SCHEDULE_DB
+        .prepare('UPDATE bookings SET status = ?1 WHERE id = ?2')
+        .bind('cancelled', bookingId)
+        .run();
+
+      if (result.meta.changes === 0) {
+        return jsonResponse({ ok: false, error: 'Booking not found' }, { status: 404, headers: corsHeaders });
+      }
+
+      return jsonResponse({ ok: true }, { status: 200, headers: corsHeaders });
+    } catch (e) {
+      console.error('Failed to cancel booking', e);
+      return jsonResponse(
+        { ok: false, error: e instanceof Error ? e.message : 'Failed to cancel booking' },
+        { status: 500, headers: corsHeaders }
+      );
+    }
+  }
+
+  if (url.pathname === '/api/schedule/admin/bookings/list') {
+    if (!env.SCHEDULE_DB) {
+      return jsonResponse({ ok: false, error: 'Booking database not configured' }, { status: 501, headers: corsHeaders });
+    }
+
+    try {
+      const result = await env.SCHEDULE_DB
+        .prepare('SELECT id, name, email, datetime, notes, status, createdAt FROM bookings ORDER BY datetime ASC')
+        .all();
+
+      return jsonResponse({ ok: true, bookings: result.results || [] }, { status: 200, headers: corsHeaders });
+    } catch (e) {
+      console.error('Failed to list bookings', e);
+      return jsonResponse(
+        { ok: false, error: e instanceof Error ? e.message : 'Failed to list bookings' },
+        { status: 500, headers: corsHeaders }
+      );
+    }
+  }
+
   return jsonResponse({ ok: false, error: 'Not found' }, { status: 404, headers: corsHeaders });
 }
