@@ -121,18 +121,23 @@ export function renderBbmMessageBoxHtml(innerHtml) {
   `;
 }
 
-export function renderBbmButtonHtml({ hrefEscaped, labelEscaped }) {
+export function renderBbmButtonHtml({ hrefEscaped, labelEscaped, secondary = false }) {
   const href = String(hrefEscaped || '').trim();
   const label = String(labelEscaped || '').trim();
   if (!href || !label) return '';
+
+  // Choose colors based on button style
+  const bgColor = secondary ? '#232323' : '#f7c873';
+  const textColor = secondary ? '#f7c873' : '#232323';
+  const borderStyle = secondary ? 'border:1px solid #f7c873;' : '';
 
   // Button built from a table for better email client compatibility.
   return `
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="border-collapse:separate;">
       <tr>
-        <td bgcolor="#f7c873" style="border-radius:10px;">
+        <td bgcolor="${bgColor}" style="border-radius:10px; ${borderStyle}">
           <a href="${href}" target="_blank" rel="noopener noreferrer"
-             style="display:inline-block; padding:10px 14px; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; font-size:14px; font-weight:700; color:#232323; text-decoration:none; border-radius:10px;">
+             style="display:inline-block; padding:10px 14px; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; font-size:14px; font-weight:700; color:${textColor}; text-decoration:none; border-radius:10px;">
             ${label}
           </a>
         </td>

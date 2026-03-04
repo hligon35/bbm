@@ -7,6 +7,8 @@ import Trio from './Trio';
 import Contact from './Contact';
 import ScheduleInvitePage from './schedule/ScheduleInvitePage';
 import AdminPage from './schedule/AdminPage';
+import CancelBookingPage from './schedule/CancelBookingPage';
+import RescheduleBookingPage from './schedule/RescheduleBookingPage';
 
 export default function Router() {
   return (
@@ -23,6 +25,9 @@ export default function Router() {
         <Route path="/schedule/:token" element={<ScheduleInvitePage />} />
         {/* Hidden admin route (intentionally not linked in navigation) */}
         <Route path="/schedule/admin" element={<Navigate to="/admin" replace />} />
+        {/* Guest self-service routes (from email links) */}
+        <Route path="/schedule/cancel" element={<CancelBookingPage />} />
+        <Route path="/schedule/reschedule" element={<RescheduleBookingPage />} />
       </Routes>
     </BrowserRouter>
   );

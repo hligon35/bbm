@@ -175,7 +175,7 @@ function buildBookingNotificationEmail({ booking, invite: _invite, timeLabel, ti
   return { subject, text, html };
 }
 
-function buildGuestConfirmationEmail({ booking, timeLabel, timeZone, googleCalendarUrl, icsUrl }) {
+function buildGuestConfirmationEmail({ booking, timeLabel, timeZone, googleCalendarUrl, icsUrl, cancelUrl, rescheduleUrl }) {
   const subject = 'Your BBM Podcast Guest Recording Is Confirmed';
 
   void timeZone;
@@ -192,7 +192,9 @@ function buildGuestConfirmationEmail({ booking, timeLabel, timeZone, googleCalen
     (googleCalendarUrl ? `Add to Google Calendar: ${googleCalendarUrl}\n` : '') +
     (icsUrl ? `Download iCal (.ics): ${icsUrl}\n\n` : '\n') +
     (guestNotes ? `Notes you submitted:\n${guestNotes}\n\n` : '') +
-    `If you have any questions or need to reschedule, just reply to this email.\n\n` +
+    (rescheduleUrl ? `Need to reschedule? ${rescheduleUrl}\n` : '') +
+    (cancelUrl ? `Need to cancel? ${cancelUrl}\n\n` : '') +
+    `If you have any questions, just reply to this email.\n\n` +
     `— Black Bridge Mindset`;
 
   const calendarButton = googleCalendarUrl
@@ -201,6 +203,14 @@ function buildGuestConfirmationEmail({ booking, timeLabel, timeZone, googleCalen
 
   const icsButton = icsUrl
     ? renderBbmButtonHtml({ hrefEscaped: escapeHtml(icsUrl), labelEscaped: 'Download iCal (.ics)' })
+    : '';
+
+  const rescheduleButton = rescheduleUrl
+    ? renderBbmButtonHtml({ hrefEscaped: escapeHtml(rescheduleUrl), labelEscaped: 'Reschedule', secondary: true })
+    : '';
+
+  const cancelButton = cancelUrl
+    ? renderBbmButtonHtml({ hrefEscaped: escapeHtml(cancelUrl), labelEscaped: 'Cancel Booking', secondary: true })
     : '';
 
   const html = wrapBbmEmailHtml({
@@ -241,7 +251,9 @@ function buildGuestConfirmationEmail({ booking, timeLabel, timeZone, googleCalen
 
       ${guestNotes ? `<p style="margin:0 0 18px 0;"><b>Notes you submitted:</b><br />${escapeHtml(guestNotes).replaceAll('\n', '<br />')}</p>` : ''}
 
-      <p style="margin:0;">If you have any questions or need to reschedule, just reply to this email.</p>
+      ${rescheduleButton || cancelButton ? `<div style="margin:16px 0;"><hr style="border:none; border-top:1px solid #e0e0e0; margin:0 0 16px 0;" /><p style="margin:0 0 12px 0; font-size:14px;"><b>Need to make changes?</b></p>${rescheduleButton ? `<div style="margin:0 0 8px 0;">${rescheduleButton}</div>` : ''}${cancelButton ? `<div style="margin:0 0 8px 0;">${cancelButton}</div>` : ''}</div>` : ''}
+
+      <p style="margin:0;">If you have any questions, just reply to this email.</p>
       <p style="margin:16px 0 0 0;">— Black Bridge Mindset</p>
     `,
   });
@@ -285,7 +297,7 @@ async function writeBooking(env, booking) {
     try {
       await env.SCHEDULE_DB
         .prepare(
-          'INSERT INTO bookings (id, token, name, email, datetime, notes, createdAt, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)'
+          'INSERT INTO bookings (id, token, name, email, datetime, notes, createdAt, status, cancellationToken) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)'
         )
         .bind(
           booking.id,
@@ -295,7 +307,8 @@ async function writeBooking(env, booking) {
           booking.datetime,
           booking.notes || '',
           booking.createdAt,
-          'confirmed'
+          'confirmed',
+          booking.cancellationToken
         )
         .run();
 
@@ -453,6 +466,7 @@ export async function handleBook(request, env, corsHeaders) {
     datetime,
     notes,
     createdAt: Date.now(),
+    cancellationToken: uuid(),
   };
 
   const storage = await writeBooking(env, booking);
@@ -516,12 +530,17 @@ export async function handleBook(request, env, corsHeaders) {
 
       // Guest
       try {
+        const cancelUrl = `${siteOrigin}/schedule/cancel?token=${encodeURIComponent(booking.cancellationToken)}`;
+        const rescheduleUrl = `${siteOrigin}/schedule/reschedule?token=${encodeURIComponent(booking.cancellationToken)}`;
+
         const guest = buildGuestConfirmationEmail({
           booking,
           timeLabel: guestTimeLabel,
           timeZone: guestTz,
           googleCalendarUrl,
           icsUrl,
+          cancelUrl,
+          rescheduleUrl,
         });
         await sendEmail(env, {
           to: [email],

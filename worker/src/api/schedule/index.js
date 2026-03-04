@@ -6,6 +6,7 @@ import { handleAdminAuth } from './auth';
 import { handleNewsletterSubscribe } from './newsletter';
 import { handleBookingIcs } from './ics';
 import { handleYouTubeUploads } from './youtube';
+import { handleGuestGetBooking, handleGuestCancelBooking } from './guest';
 
 function securityHeaders() {
   return {
@@ -135,6 +136,14 @@ export async function handleScheduleRequest(request, env) {
 
   if (url.pathname === '/api/schedule/slots') {
     return handleSlots(request, env, cors);
+  }
+
+  if (url.pathname === '/api/schedule/guest/booking') {
+    return handleGuestGetBooking(request, env, cors);
+  }
+
+  if (url.pathname === '/api/schedule/guest/cancel') {
+    return handleGuestCancelBooking(request, env, cors);
   }
 
   return jsonResponse({ ok: false, error: 'Not found' }, { status: 404, headers: cors });
