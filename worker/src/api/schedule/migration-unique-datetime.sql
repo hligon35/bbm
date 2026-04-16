@@ -6,5 +6,6 @@
 --   SELECT datetime, COUNT(*) c FROM bookings GROUP BY datetime HAVING c > 1;
 -- If duplicates exist, resolve them first (cancel duplicates or update their datetime).
 
-CREATE UNIQUE INDEX idx_bookings_unique_datetime
-  ON bookings (datetime);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_bookings_unique_datetime
+  ON bookings (datetime)
+  WHERE status = 'confirmed' OR status IS NULL;
