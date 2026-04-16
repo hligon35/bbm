@@ -1,13 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Layout from './Layout';
-
-const asset = (path) => {
-  const base = (import.meta.env.BASE_URL || '/');
-  const clean = String(path).replace(/^\/+/,'');
-  return `${base}${clean}`;
-};
+import { asset } from './utils/asset';
 
 export default function Contact() {
+  useEffect(() => { document.title = 'Contact | Black Bridge Mindset'; }, []);
   const endpoint = useMemo(() => {
     // Prefer explicit endpoint; otherwise assume a Worker is routed at /api/contact on the same domain.
     return import.meta.env.VITE_CONTACT_ENDPOINT || '/api/contact';
@@ -152,10 +148,10 @@ export default function Contact() {
           <div className="bbm-contact-info">
             <h3 className="bbm-contact-subtitle">Connect</h3>
             <div className="bbm-social-icons">
-              <a href="http://facebook.com/share/12EqRNzg4YP/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="bbm-social-link">
+              <a href="https://facebook.com/share/12EqRNzg4YP/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="bbm-social-link">
                 <img src={asset('images/facebook.png')} alt="Facebook" className="bbm-social-img" loading="lazy" decoding="async" />
               </a>
-              <a href="http://instagram.com/blackbridgemindset" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="bbm-social-link">
+              <a href="https://instagram.com/blackbridgemindset" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="bbm-social-link">
                 <img src={asset('images/instagram.png')} alt="Instagram" className="bbm-social-img" loading="lazy" decoding="async" />
               </a>
               <a href="https://www.youtube.com/@BlackBridgeMindset" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="bbm-social-link">

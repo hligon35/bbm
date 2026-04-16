@@ -14,6 +14,16 @@ function jsonResponse(body, { status = 200, headers = {} } = {}) {
   });
 }
 
+async function rateLimit(env, { key, limit, windowSeconds }) {
+  if (!env.SCHEDULE_CONFIG) return { ok: true };
+  const k = `booking:rl:${key}`;
+  const current = Number(await env.SCHEDULE_CONFIG.get(k));
+  const next = Number.isFinite(current) ? current + 1 : 1;
+  if (next > limit) return { ok: false };
+  await env.SCHEDULE_CONFIG.put(k, String(next), { expirationTtl: windowSeconds });
+  return { ok: true };
+}
+
 function uuid() {
   // `crypto.randomUUID()` is available in Workers.
   return crypto.randomUUID();
@@ -383,6 +393,18 @@ async function createGoogleCalendarEventPlaceholder(_env, _booking) {
 }
 
 export async function handleBook(request, env, corsHeaders) {
+  // Rate limit: 3 booking attempts per IP per 10 minutes.
+  const ip = request.headers.get('CF-Connecting-IP') || '';
+  if (ip) {
+    const rl = await rateLimit(env, { key: `ip:${ip}`, limit: 3, windowSeconds: 600 });
+    if (!rl.ok) {
+      return jsonResponse(
+        { ok: false, error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: { ...corsHeaders, 'Retry-After': '600' } }
+      );
+    }
+  }
+
   let body;
   try {
     body = await request.json();

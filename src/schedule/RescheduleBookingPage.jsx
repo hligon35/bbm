@@ -2,6 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 
 export default function RescheduleBookingPage() {
+  useEffect(() => {
+    document.title = 'Reschedule Booking | Black Bridge Mindset';
+  }, []);
+
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState('loading'); // loading, loaded, error

@@ -7,6 +7,10 @@ import ScheduleAdminPage from './ScheduleAdminPage';
 import { adminGetSession } from './utils/adminApi';
 
 export default function AdminPage() {
+  useEffect(() => {
+    document.title = 'Admin | Black Bridge Mindset';
+  }, []);
+
   const [sessionState, setSessionState] = useState({ status: 'loading', email: null });
 
   const refreshSession = useCallback(async () => {

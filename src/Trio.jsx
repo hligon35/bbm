@@ -1,13 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Layout from './Layout';
-
-const asset = (path) => {
-  const base = (import.meta.env.BASE_URL || '/');
-  const clean = String(path).replace(/^\/+/,'');
-  return `${base}${clean}`;
-};
+import { asset } from './utils/asset';
 
 export default function Trio() {
+  useEffect(() => { document.title = 'Meet the Trio | Black Bridge Mindset'; }, []);
   return (
     <Layout>
       <section className="bbm-section bbm-trio">
@@ -23,7 +19,7 @@ export default function Trio() {
               </p>
             </div>
             <div className="bbm-trio-photo">
-              <img className="bbm-avatar" src={asset('images/Lovett.png')} alt="Host 1" loading="lazy" decoding="async" />
+              <img className="bbm-avatar" src={asset('images/Lovett.png')} alt="Mike Lovett" loading="lazy" decoding="async" />
               <h3>Mike Lovett</h3>
               <div className="bbm-host-label">Host &amp; Creator</div>
             </div>
@@ -31,7 +27,7 @@ export default function Trio() {
           {/* Card 2: Image left, text right */}
           <div className="bbm-trio-card bbm-trio-row bbm-trio-row-reverse">
             <div className="bbm-trio-photo">
-              <img className="bbm-avatar" src={asset('images/CJ.jpg')} alt="Host 2" loading="lazy" decoding="async" />
+              <img className="bbm-avatar" src={asset('images/CJ.jpg')} alt="Chris Johnson" loading="lazy" decoding="async" />
               <h3>Chris Johnson</h3>
               <div className="bbm-host-label">Co-Host</div>
             </div>
@@ -52,7 +48,7 @@ export default function Trio() {
               </p>
             </div>
             <div className="bbm-trio-photo">
-              <img className="bbm-avatar" src={asset('images/Ken.png')} alt="Host 3" loading="lazy" decoding="async" />
+              <img className="bbm-avatar" src={asset('images/Ken.png')} alt="Ken Peak" loading="lazy" decoding="async" />
               <h3>Ken Peak</h3>
               <div className="bbm-host-label">Co-Host</div>
             </div>

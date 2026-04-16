@@ -7,10 +7,12 @@ const CHANNEL_HANDLE_URL = 'https://www.youtube.com/@BlackBridgeMindset';
 // Optional client-side key (bundled into the build). Prefer using the Worker endpoint
 // (/api/schedule/youtube/uploads) so the key can live server-side.
 //
-// If you do use a client key, restrict it heavily in Google Cloud Console.
+// In production, leave VITE_YOUTUBE_API_KEY unset — the Worker proxy handles fetching.
+// Only set this in local dev (it will be included in the JS bundle otherwise).
+//
 // Set in `.env` / hosting env vars:
 //   VITE_YOUTUBE_API_KEY=... (YouTube Data API v3)
-const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY || '';
+const API_KEY = import.meta.env.DEV ? (import.meta.env.VITE_YOUTUBE_API_KEY || '') : '';
 
 const UPLOADS_PLAYLIST_ID = CHANNEL_ID.replace(/^UC/, 'UU');
 const MAX_VIDEOS = 500; // safety cap (prevents infinite pagination)
@@ -219,7 +221,7 @@ export default function YouTubeVideos({
           setStatus('ready');
           return;
         }
-      } catch (e) {
+      } catch {
         // Ignore and fall back to client-side API key if configured.
       }
 

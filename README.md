@@ -1,19 +1,97 @@
-# bbm
+# Black Bridge Mindset Website
 
-Triggered deploy workflow on August 21, 2025.
+Official website for the Black Bridge Mindset podcast.
 
-# React + Vite
+This repository contains:
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-# React + Vite
+- A Vite + React frontend (public marketing pages, episodes, podcast, trio, contact, scheduling UI)
+- A Cloudflare Worker backend (`worker/`) for contact email, scheduling APIs, OTP admin auth, newsletter, and YouTube upload proxy
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Tech Stack
 
-Currently, two official plugins are available:
+- Frontend: React 19, React Router 7, Vite 7
+- Backend: Cloudflare Workers (JavaScript modules)
+- Data: Cloudflare D1 + Cloudflare KV
+- Email: SendGrid / MailChannels via worker abstraction
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Project Structure
 
-## Expanding the ESLint configuration
+- `src/`: React app source
+- `public/`: static assets and Cloudflare Pages headers
+- `worker/src/`: Worker API routes and backend logic
+- `worker/src/api/schedule/`: scheduling endpoints (slots, booking, admin, auth, ICS, YouTube proxy)
+- `scripts/`: one-off maintenance and utility scripts
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Frontend Setup
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+1. Configure environment:
+
+```bash
+cp .env.example .env
+```
+
+Set values as needed:
+
+- `VITE_CONTACT_ENDPOINT` (optional for local/dev API routing)
+- `VITE_SCHEDULE_API_BASE` (optional if worker is same-origin)
+- `VITE_NEWSLETTER_SUBSCRIBE_ENDPOINT` (optional override)
+- `VITE_YOUTUBE_API_KEY` (dev-only fallback; do not set in production)
+
+1. Start development server:
+
+```bash
+npm run dev
+```
+
+1. Build production bundle:
+
+```bash
+npm run build
+```
+
+## Worker Setup
+
+Worker configuration lives in `worker/wrangler.toml`.
+
+Typical local workflow:
+
+```bash
+cd worker
+npm install
+npx wrangler dev
+```
+
+Required bindings and vars depend on features in use, including:
+
+- `SCHEDULE_DB` (D1)
+- `SCHEDULE_TOKENS`, `SCHEDULE_CONFIG`, optionally `SCHEDULE_BOOKINGS` (KV)
+- `ALLOWED_ORIGINS`, `SCHEDULE_ADMIN_ALLOWED_HOSTS`
+- Email provider environment variables
+
+See `worker/README.md` and `worker/src/api/schedule/README.md` for route-specific details.
+
+## Security Notes
+
+- Keep YouTube API keys out of production client bundles. The site uses `/api/schedule/youtube/uploads` as the preferred server-side proxy.
+- Contact and booking endpoints include rate limiting using KV-backed counters.
+- Security headers are defined at both Pages (`public/_headers`) and Worker response layers.
+
+## Database Migration
+
+To enforce booking idempotency by timeslot, apply:
+
+- `worker/src/api/schedule/migration-unique-datetime.sql`
+
+Before applying, verify there are no duplicate `datetime` values in existing `bookings` rows.
+
+## Deployment
+
+- Frontend is designed for Cloudflare Pages deployment.
+- Worker deploy is managed independently via Wrangler.
+- Ensure environment variables and bindings are configured in each target environment.

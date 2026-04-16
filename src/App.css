@@ -1595,6 +1595,7 @@ body {
   justify-content: center;
   line-height: 1;
   font-size: 20px;
+  -webkit-user-select: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;

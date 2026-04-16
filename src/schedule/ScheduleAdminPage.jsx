@@ -43,6 +43,10 @@ function availabilitySignature(value) {
 }
 
 export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEmail = null, onUnauthorized, onLoggedOut }) {
+  useEffect(() => {
+    document.title = 'Schedule Admin | Black Bridge Mindset';
+  }, []);
+
   const navigate = useNavigate();
 
   const helpBtnRef = useRef(null);
@@ -312,7 +316,6 @@ export default function ScheduleAdminPage({ skipSessionCheck = false, sessionEma
     const spaceRight = window.innerWidth - (rect.left + rect.width);
     const spaceLeft = rect.left;
     const spaceBottom = window.innerHeight - (rect.top + rect.height);
-    const spaceTop = rect.top;
 
     let placement = 'right';
     if (spaceRight >= tipRect.width + padding) placement = 'right';

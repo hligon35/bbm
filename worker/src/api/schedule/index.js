@@ -7,26 +7,7 @@ import { handleNewsletterSubscribe } from './newsletter';
 import { handleBookingIcs } from './ics';
 import { handleYouTubeUploads } from './youtube';
 import { handleGuestGetBooking, handleGuestCancelBooking } from './guest';
-
-function securityHeaders() {
-  return {
-    'X-Content-Type-Options': 'nosniff',
-    'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Permissions-Policy': 'geolocation=(), camera=(), microphone=(), payment=(), usb=()',
-    'Cache-Control': 'no-store',
-  };
-}
-
-function jsonResponse(body, { status = 200, headers = {} } = {}) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      ...securityHeaders(),
-      ...headers,
-    },
-  });
-}
+import { jsonResponse, securityHeaders } from '../../shared/http';
 
 function parseAllowedOrigins(env) {
   const raw = String(env.ALLOWED_ORIGINS || '').trim();
@@ -95,7 +76,12 @@ export async function handleScheduleRequest(request, env) {
 
   // iCal downloads are triggered from email clients and should be GET.
   if (url.pathname === '/api/schedule/booking/ics') {
-    return handleBookingIcs(request, env);
+    const res = await handleBookingIcs(request, env);
+    const headers = new Headers(res.headers);
+    const sec = securityHeaders();
+    for (const [k, v] of Object.entries(sec)) headers.set(k, v);
+    for (const [k, v] of Object.entries(cors)) headers.set(k, v);
+    return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
   }
 
   if (request.method === 'OPTIONS') {

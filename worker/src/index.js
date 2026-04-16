@@ -1,26 +1,8 @@
 import { handleScheduleRequest } from './api/schedule';
 import { sendEmail } from './email';
 import { wrapBbmEmailHtml, renderBbmMessageBoxHtml, bbmMutedTextStyle } from './emailTheme';
-
-function securityHeaders() {
-  return {
-    'X-Content-Type-Options': 'nosniff',
-    'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Permissions-Policy': 'geolocation=(), camera=(), microphone=(), payment=(), usb=()',
-    'Cache-Control': 'no-store',
-  };
-}
-
-function jsonResponse(body, { status = 200, headers = {} } = {}) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      ...securityHeaders(),
-      ...headers,
-    },
-  });
-}
+import { jsonResponse, securityHeaders } from './shared/http';
+import { escapeHtml } from './shared/sanitize';
 
 function parseAllowedOrigins(env) {
   const raw = String(env.ALLOWED_ORIGINS || '').trim();
@@ -58,15 +40,6 @@ function corsHeadersFor(origin, allowedOrigins) {
   return {};
 }
 
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
-
 function buildEmail({ name, email, subject, message, ip, ua, origin }) {
   const cleanSubject = subject ? subject : 'New contact form submission';
   const text =
@@ -101,6 +74,16 @@ function buildEmail({ name, email, subject, message, ip, ua, origin }) {
   });
 
   return { subject: `[BBM Contact] ${cleanSubject}`, text, html };
+}
+
+async function rateLimit(env, { key, limit, windowSeconds }) {
+  if (!env.SCHEDULE_CONFIG) return { ok: true };
+  const k = `contact:rl:${key}`;
+  const current = Number(await env.SCHEDULE_CONFIG.get(k));
+  const next = Number.isFinite(current) ? current + 1 : 1;
+  if (next > limit) return { ok: false };
+  await env.SCHEDULE_CONFIG.put(k, String(next), { expirationTtl: windowSeconds });
+  return { ok: true };
 }
 
 async function sendViaMailChannels(env, { replyToEmail, subject, text, html }) {
@@ -178,6 +161,17 @@ export default {
 
     const ip = request.headers.get('CF-Connecting-IP') || '';
     const ua = request.headers.get('User-Agent') || '';
+
+    // Rate limit: 5 contact form submissions per IP per 10 minutes.
+    if (ip) {
+      const rl = await rateLimit(env, { key: `ip:${ip}`, limit: 5, windowSeconds: 600 });
+      if (!rl.ok) {
+        return jsonResponse(
+          { ok: false, error: 'Too many requests. Please try again later.' },
+          { status: 429, headers: { ...cors, 'Retry-After': '600' } }
+        );
+      }
+    }
 
     const emailContent = buildEmail({ name, email, subject, message, ip, ua, origin });
 

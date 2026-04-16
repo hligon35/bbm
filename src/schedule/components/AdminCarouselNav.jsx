@@ -2,7 +2,6 @@ import React from 'react';
 
 export default function AdminCarouselNav({ items, activeId, onChange }) {
   const safeItems = Array.isArray(items) ? items.filter(Boolean) : [];
-  const activeIndex = Math.max(0, safeItems.findIndex((x) => x.id === activeId));
 
   return (
     <div style={{ maxWidth: 760, margin: '0 auto 18px auto' }}>

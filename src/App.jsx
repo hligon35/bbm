@@ -1,16 +1,12 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Layout from './Layout';
 import { useNavigate } from 'react-router-dom';
 import YouTubeVideos from './YouTubeVideos';
-
-const asset = (path) => {
-  const base = (import.meta.env.BASE_URL || '/');
-  const clean = String(path).replace(/^\/+/,'');
-  return `${base}${clean}`;
-};
+import { asset } from './utils/asset';
 
 function App() {
+  useEffect(() => { document.title = 'Black Bridge Mindset | Podcast'; }, []);
   const navigate = useNavigate();
   const handlePlatformClick = (e) => {
     e.preventDefault();

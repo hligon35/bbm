@@ -1,14 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Layout from './Layout';
 import BuzzsproutPlayer from './BuzzsproutPlayer';
-
-const asset = (path) => {
-  const base = (import.meta.env.BASE_URL || '/');
-  const clean = String(path).replace(/^\/+/,'');
-  return `${base}${clean}`;
-};
+import { asset } from './utils/asset';
 
 export default function Podcast() {
+  useEffect(() => { document.title = 'Listen | Black Bridge Mindset'; }, []);
   return (
     <Layout>
       <main className="bbm-section bbm-podcast">

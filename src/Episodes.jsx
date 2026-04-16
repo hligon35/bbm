@@ -1,18 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import Layout from './Layout';
 import YouTubeVideos from './YouTubeVideos';
+import { asset } from './utils/asset';
 
 const YOUTUBE_CHANNEL_URL = 'https://www.youtube.com/@BlackBridgeMindset';
 const YOUTUBE_SUBSCRIBE_URL = 'https://www.youtube.com/@BlackBridgeMindset?sub_confirmation=1';
 
-const asset = (path) => {
-  const base = (import.meta.env.BASE_URL || '/');
-  const clean = String(path).replace(/^\/+/, '');
-  return `${base}${clean}`;
-};
-
 export default function Episodes() {
+  useEffect(() => { document.title = 'Episodes | Black Bridge Mindset'; }, []);
   return (
     <Layout>
       <main>

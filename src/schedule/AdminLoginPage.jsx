@@ -24,6 +24,10 @@ function isValidEmail(value) {
 }
 
 export default function AdminLoginPage({ onSuccess }) {
+  useEffect(() => {
+    document.title = 'Admin Login | Black Bridge Mindset';
+  }, []);
+
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');

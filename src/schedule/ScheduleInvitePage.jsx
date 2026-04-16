@@ -18,6 +18,10 @@ import { submitBooking } from './utils/submitBooking';
  * It is only reachable via a direct invite link containing a unique token.
  */
 export default function ScheduleInvitePage() {
+  useEffect(() => {
+    document.title = 'Schedule Recording | Black Bridge Mindset';
+  }, []);
+
   const { token } = useParams();
 
   const [tokenState, setTokenState] = useState({ status: 'loading', data: null, error: null });

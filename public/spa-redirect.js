@@ -23,12 +23,12 @@
 
     try {
       sessionStorage.setItem('bbm_redirect', l.pathname + l.search + l.hash);
-    } catch (e) {
+    } catch {
       // ignore
     }
 
     l.replace('/');
-  } catch (e) {
+  } catch {
     // ignore
   }
 })();

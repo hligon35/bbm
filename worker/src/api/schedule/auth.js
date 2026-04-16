@@ -1,24 +1,7 @@
 import { sendEmail } from '../../email';
 import { wrapBbmEmailHtml, renderBbmCodeBoxHtml } from '../../emailTheme';
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
-
-function jsonResponse(body, { status = 200, headers = {} } = {}) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      ...headers,
-    },
-  });
-}
+import { jsonResponse } from '../../shared/http';
+import { escapeHtml, normalizeEmail } from '../../shared/sanitize';
 
 function isDevMode(env) {
   return String(env.SCHEDULE_DEV_MODE || '').toLowerCase() === 'true';
@@ -54,10 +37,6 @@ function enforceAdminHost(request, env, corsHeaders) {
   return null;
 }
 
-function normalizeEmail(value) {
-  return String(value || '').trim().toLowerCase();
-}
-
 function timingSafeEqual(a, b) {
   const aa = String(a);
   const bb = String(b);
@@ -83,11 +62,19 @@ function isAllowedEmail(env, email) {
 }
 
 function randomOtpCode() {
+  const max = 1000000;
+  const limit = Math.floor(0x100000000 / max) * max;
   const bytes = new Uint8Array(4);
-  crypto.getRandomValues(bytes);
-  const num = (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
-  const six = Math.abs(num) % 1000000;
-  return String(six).padStart(6, '0');
+  while (true) {
+    crypto.getRandomValues(bytes);
+    const num =
+      bytes[0] * 0x1000000 +
+      bytes[1] * 0x10000 +
+      bytes[2] * 0x100 +
+      bytes[3];
+    if (num >= limit) continue;
+    return String(num % max).padStart(6, '0');
+  }
 }
 
 function base64UrlEncode(bytes) {
