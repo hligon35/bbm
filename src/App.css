@@ -66,11 +66,19 @@
 }
 @media (max-width: 600px) {
   .bbm-navbar-content {
-    padding: 0 0.5rem;
+    padding: 0 0.5rem 0.2rem;
   }
-  .bbm-navbar-logo {
+  .bbm-navbar-logo-text {
     font-size: 1.1rem;
+    line-height: 1.02;
     letter-spacing: 1px;
+  }
+  .bbm-navbar {
+    height: 64px;
+  }
+  body,
+  .bbm-root {
+    padding-top: 64px;
   }
   .bbm-navbar-menu-icon, .bbm-navbar-menu-icon::before, .bbm-navbar-menu-icon::after {
     width: 22px;
@@ -84,7 +92,7 @@
     /* max-width: 900px; removed to allow expansion */
   }
   .bbm-title {
-    font-size: 2.1rem;
+    font-size: 1.95rem;
   }
   .bbm-subtitle {
     font-size: 1rem;
@@ -450,7 +458,13 @@ body, .bbm-root {
   gap: 0.5rem;
 }
 
+.bbm-videos-row-shell .bbm-videos-viewport {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .bbm-videos-row-shell .bbm-videos-embeds--row {
+  width: 100%;
   padding-bottom: 0;
 }
 
@@ -1246,12 +1260,12 @@ body {
 }
 
 @media (max-width: 900px) {
-  .bbm-videos-embeds {
+  .bbm-videos-embeds:not(.bbm-videos-embeds--row) {
     flex-direction: column;
     align-items: center;
     gap: 1.5rem;
   }
-  .bbm-videos-embeds iframe {
+  .bbm-videos-embeds:not(.bbm-videos-embeds--row) iframe {
     width: 100%;
     height: 220px;
     max-width: 100%;
